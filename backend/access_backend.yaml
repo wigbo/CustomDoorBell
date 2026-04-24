@@ -1,0 +1,109 @@
+substitutions:
+  name: "access-backend"
+  friendly_name: "Access Controller Backend"
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  name_add_mac_suffix: false
+  project:
+    name: "custom.smart_access_backend"
+    version: "1.0"
+
+esp32:
+  board: esp32-s3-devkitc-1
+  framework:
+    type: esp-idf
+
+# ==========================================
+# NETZWERK: Ethernet via W5500 (Waveshare PoE)
+# ==========================================
+# ACHTUNG: Prüfe die genauen Pin-Zuweisungen im 
+# Datenblatt deines spezifischen Waveshare PoE Boards.
+spi:
+  id: spi_ethernet
+  clk_pin: GPIO36
+  mosi_pin: GPIO35
+  miso_pin: GPIO37
+
+ethernet:
+  type: W5500
+  cs_pin: GPIO38
+  interrupt_pin: GPIO34
+  reset_pin: GPIO33
+
+# ==========================================
+# HOME ASSISTANT API & OTA
+# ==========================================
+api:
+  services:
+    - service: send_display_cmd
+      variables:
+        cmd: string
+      then:
+        - uart.write:
+            id: uart_display
+            data: !lambda 'return cmd + "\n";'
+
+ota:
+  - platform: esphome
+
+logger:
+  level: DEBUG
+
+# ==========================================
+# BUS-SYSTEME (UART & I2C)
+# ==========================================
+i2c:
+  sda: GPIO4
+  scl: GPIO5
+  scan: true
+  id: i2c_bus
+
+uart:
+  # UART1: Für den Fingerabdruck-Scanner
+  - id: uart_finger
+    tx_pin: GPIO17
+    rx_pin: GPIO16
+    baud_rate: 57600
+  
+  # UART2: Verbindung zum Display (Frontend)
+  - id: uart_display
+    tx_pin: GPIO19
+    rx_pin: GPIO18
+    baud_rate: 115200
+
+# ==========================================
+# SENSORIK: NFC (PN532)
+# ==========================================
+pn532_i2c:
+  id: nfc_reader
+  update_interval: 1s
+  on_tag:
+    then:
+      - homeassistant.event:
+          event: esphome.access_nfc_scan
+          data:
+            uid: !lambda 'return x;'
+      - logger.log: "NFC Tag erfolgreich gescannt und an HA gesendet."
+
+# ==========================================
+# SENSORIK: Fingerprint (Grow R503)
+# ==========================================
+fingerprint_grow:
+  id: fingerprint_reader
+  uart_id: uart_finger
+  on_finger_scan_matched:
+    - homeassistant.event:
+        event: esphome.access_finger_scan
+        data:
+          finger_id: !lambda 'return finger_id;'
+          confidence: !lambda 'return confidence;'
+    # Direktes UART Feedback ans Display für geringe Latenz
+    - uart.write:
+        id: uart_display
+        data: "PROCESSING\n"
+  on_finger_scan_unmatched:
+    - uart.write:
+        id: uart_display
+        data: "DENIED\n"
