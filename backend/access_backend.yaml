@@ -1,6 +1,7 @@
 substitutions:
   name: "access-backend"
   friendly_name: "Access Controller Backend"
+  ota_password: "CHANGE_ME_BEFORE_FLASHING"
 
 esphome:
   name: ${name}
@@ -8,9 +9,11 @@ esphome:
   name_add_mac_suffix: false
   project:
     name: "custom.smart_access_backend"
-    version: "1.0"
+    version: "2.0"
 
 esp32:
+  # Kein offizielles ESPHome-Board-Profil für Waveshare ESP32-S3-PoE.
+  # esp32-s3-devkitc-1 als generisches S3-Target verwenden.
   board: esp32-s3-devkitc-1
   framework:
     type: esp-idf
@@ -18,17 +21,19 @@ esp32:
 # ==========================================
 # NETZWERK: Ethernet via W5500 (Waveshare PoE)
 # ==========================================
-# ACHTUNG: Prüfe die genauen Pin-Zuweisungen im 
-# Datenblatt deines spezifischen Waveshare PoE Boards.
+# FIXME: Alle SPI- und Ethernet-Pins MÜSSEN gegen das
+# Datenblatt des spezifischen Waveshare ESP32-S3-PoE Boards
+# verifiziert werden. Die aktuellen Werte sind Platzhalter
+# und werden voraussichtlich nicht korrekt sein (insb. MOSI).
 spi:
   id: spi_ethernet
-  clk_pin: GPIO36
-  mosi_pin: GPIO35
-  miso_pin: GPIO37
+  clk_pin: GPIO36    # FIXME: Im PoE-Board Datenblatt prüfen
+  mosi_pin: GPIO35   # FIXME: Laut Analyse wahrscheinlich falsch
+  miso_pin: GPIO37   # FIXME: Im PoE-Board Datenblatt prüfen
 
 ethernet:
   type: W5500
-  cs_pin: GPIO38
+  cs_pin: GPIO38     # FIXME: Im PoE-Board Datenblatt prüfen
   interrupt_pin: GPIO34
   reset_pin: GPIO33
 
@@ -37,45 +42,101 @@ ethernet:
 # ==========================================
 api:
   services:
-    - service: send_display_cmd
-      variables:
-        cmd: string
+    # Zutritt gewährt — wird von HA nach erfolgreicher
+    # Berechtigungsprüfung (Finger/NFC) aufgerufen.
+    - service: show_access_granted
       then:
         - uart.write:
             id: uart_display
-            data: !lambda 'return cmd + "\n";'
+            data: "OPEN\n"
+        - logger.log: "HA: Zutritt gewaehrt → OPEN"
+
+    # Zutritt verweigert — wird von HA nach fehlgeschlagener
+    # Prüfung oder bei aktiver Zeitsperre aufgerufen.
+    - service: show_access_denied
+      then:
+        - uart.write:
+            id: uart_display
+            data: "DENIED\n"
+        - logger.log: "HA: Zutritt verweigert → DENIED"
+
+    # Klingel-Event — ausgelöst von einer HA-Automation,
+    # z.B. wenn ein Türklingel-Taster gedrückt wird.
+    - service: trigger_doorbell
+      then:
+        - uart.write:
+            id: uart_display
+            data: "DOORBELL\n"
+        - logger.log: "HA: Klingel-Event → DOORBELL"
+
+    # Paket-Lieferung — z.B. aus einer HA-Automation
+    # (Briefkasten-Sensor, NFC-Tag am Paketfach, etc.)
+    - service: show_package
+      then:
+        - uart.write:
+            id: uart_display
+            data: "PACKAGE\n"
+        - logger.log: "HA: Paket-Event → PACKAGE"
+
+    # Individuelle Nachricht mit Icon.
+    # Erlaubte icon-Werte: info, warnung, herz, liebe, haus, muell
+    # Hinweis: message und icon dürfen kein ':' oder '\n' enthalten.
+    - service: show_custom
+      variables:
+        message: string
+        icon: string
+      then:
+        - uart.write:
+            id: uart_display
+            data: !lambda 'return "CUSTOM:" + icon + ":" + message + "\n";'
+        - logger.log:
+            format: "HA: Custom → icon=%s msg=%s"
+            args: ['icon.c_str()', 'message.c_str()']
+
+    # Display in Bereitschaft versetzen (IDLE-Seite, dann Panel aus).
+    - service: set_idle
+      then:
+        - uart.write:
+            id: uart_display
+            data: "IDLE\n"
+        - logger.log: "HA: Display → IDLE"
 
 ota:
   - platform: esphome
+    password: ${ota_password}
 
 logger:
   level: DEBUG
 
 # ==========================================
-# BUS-SYSTEME (UART & I2C)
+# BUS-SYSTEME: UART & I2C
 # ==========================================
 i2c:
+  id: i2c_bus
   sda: GPIO4
   scl: GPIO5
   scan: true
-  id: i2c_bus
 
 uart:
-  # UART1: Für den Fingerabdruck-Scanner
+  # UART1: Fingerabdruck-Scanner Grow R503
   - id: uart_finger
     tx_pin: GPIO17
     rx_pin: GPIO16
     baud_rate: 57600
-  
-  # UART2: Verbindung zum Display (Frontend)
+
+  # UART2: Display-Frontend (Master → Slave Bridge)
   - id: uart_display
     tx_pin: GPIO19
     rx_pin: GPIO18
     baud_rate: 115200
 
 # ==========================================
-# SENSORIK: NFC (PN532)
+# NFC (PN532 via I2C)
 # ==========================================
+# Das Scan-Event geht an HA. HA prüft die UID gegen
+# bekannte Tags und ruft ggf. show_access_granted oder
+# show_access_denied auf. Kein PROCESSING-Feedback nötig,
+# da NFC-Scans in der Regel schneller sind als Fingerprints.
 pn532_i2c:
   id: nfc_reader
   update_interval: 1s
@@ -85,25 +146,35 @@ pn532_i2c:
           event: esphome.access_nfc_scan
           data:
             uid: !lambda 'return x;'
-      - logger.log: "NFC Tag erfolgreich gescannt und an HA gesendet."
+      - logger.log:
+          format: "NFC Tag: %s"
+          args: ['x.c_str()']
 
 # ==========================================
-# SENSORIK: Fingerprint (Grow R503)
+# FINGERPRINT (Grow R503)
 # ==========================================
+# Ablauf:
+#   1. Finger erkannt → sofort PROCESSING ans Display
+#   2. Event mit finger_id + confidence an HA
+#   3. HA prüft Berechtigung (Zeitpläne, Rechte etc.)
+#   4. HA ruft show_access_granted oder show_access_denied auf
 fingerprint_grow:
   id: fingerprint_reader
   uart_id: uart_finger
   on_finger_scan_matched:
-    - homeassistant.event:
-        event: esphome.access_finger_scan
-        data:
-          finger_id: !lambda 'return finger_id;'
-          confidence: !lambda 'return confidence;'
-    # Direktes UART Feedback ans Display für geringe Latenz
     - uart.write:
         id: uart_display
         data: "PROCESSING\n"
+    - homeassistant.event:
+        event: esphome.access_finger_scan
+        data:
+          finger_id: !lambda 'return to_string(finger_id);'
+          confidence: !lambda 'return to_string(confidence);'
+    - logger.log:
+        format: "Fingerabdruck: ID=%d Confidence=%d → PROCESSING"
+        args: ['finger_id', 'confidence']
   on_finger_scan_unmatched:
     - uart.write:
         id: uart_display
         data: "DENIED\n"
+    - logger.log: "Fingerabdruck: Kein Match → DENIED"
