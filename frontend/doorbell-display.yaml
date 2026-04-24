@@ -67,16 +67,18 @@ api:
         - lambda: |-
             lv_obj_t *obj = id(icon_bell);
             lv_anim_del(obj, NULL);
+            lv_obj_set_style_transform_pivot_x(obj, LV_PCT(50), 0);
+            lv_obj_set_style_transform_pivot_y(obj, LV_PCT(50), 0);
             lv_anim_t a;
             lv_anim_init(&a);
             lv_anim_set_var(&a, obj);
-            lv_anim_set_values(&a, 256, 290); // Zoom: sanfter (256->290) gegen Flimmern
-            lv_anim_set_time(&a, 800); // Langsamerer Beat
-            lv_anim_set_playback_time(&a, 800);
+            lv_anim_set_values(&a, 256, 295);
+            lv_anim_set_time(&a, 700);
+            lv_anim_set_reverse_time(&a, 700);
             lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
             lv_anim_set_exec_cb(&a, [](void *obj, int32_t val) {
                 lv_obj_set_style_transform_zoom((lv_obj_t *)obj, val, 0);
-                lv_obj_invalidate((lv_obj_t *)obj); // ERZWINGT NEUZEICHNEN
+                lv_obj_invalidate((lv_obj_t *)obj);
             });
             lv_anim_start(&a);
         - delay: 15s
@@ -104,12 +106,14 @@ api:
         - lambda: |-
             lv_obj_t *obj = id(icon_grant);
             lv_anim_del(obj, NULL);
+            lv_obj_set_style_transform_pivot_x(obj, LV_PCT(50), 0);
+            lv_obj_set_style_transform_pivot_y(obj, LV_PCT(50), 0);
             lv_anim_t a;
             lv_anim_init(&a);
             lv_anim_set_var(&a, obj);
-            lv_anim_set_values(&a, 256, 290);
-            lv_anim_set_time(&a, 600);
-            lv_anim_set_playback_time(&a, 600);
+            lv_anim_set_values(&a, 256, 275);
+            lv_anim_set_time(&a, 500);
+            lv_anim_set_reverse_time(&a, 500);
             lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
             lv_anim_set_exec_cb(&a, [](void *obj, int32_t val) {
                 lv_obj_set_style_transform_zoom((lv_obj_t *)obj, val, 0);
@@ -134,12 +138,14 @@ api:
         - lambda: |-
             lv_obj_t *obj = id(icon_deny);
             lv_anim_del(obj, NULL);
+            lv_obj_set_style_transform_pivot_x(obj, LV_PCT(50), 0);
+            lv_obj_set_style_transform_pivot_y(obj, LV_PCT(50), 0);
             lv_anim_t a;
             lv_anim_init(&a);
             lv_anim_set_var(&a, obj);
-            lv_anim_set_values(&a, 256, 290);
-            lv_anim_set_time(&a, 300);
-            lv_anim_set_playback_time(&a, 300);
+            lv_anim_set_values(&a, 256, 300);
+            lv_anim_set_time(&a, 250);
+            lv_anim_set_reverse_time(&a, 250);
             lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
             lv_anim_set_exec_cb(&a, [](void *obj, int32_t val) {
                 lv_obj_set_style_transform_zoom((lv_obj_t *)obj, val, 0);
@@ -198,12 +204,14 @@ script:
       - lambda: |-
           lv_obj_t *obj = id(icon_bell);
           lv_anim_del(obj, NULL);
+          lv_obj_set_style_transform_pivot_x(obj, LV_PCT(50), 0);
+          lv_obj_set_style_transform_pivot_y(obj, LV_PCT(50), 0);
           lv_anim_t a;
           lv_anim_init(&a);
           lv_anim_set_var(&a, obj);
-          lv_anim_set_values(&a, 256, 290);
-          lv_anim_set_time(&a, 800);
-          lv_anim_set_playback_time(&a, 800);
+          lv_anim_set_values(&a, 256, 295);
+          lv_anim_set_time(&a, 700);
+          lv_anim_set_reverse_time(&a, 700);
           lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
           lv_anim_set_exec_cb(&a, [](void *obj, int32_t val) {
               lv_obj_set_style_transform_zoom((lv_obj_t *)obj, val, 0);
@@ -227,12 +235,14 @@ script:
       - lambda: |-
           lv_obj_t *obj = id(icon_grant);
           lv_anim_del(obj, NULL);
+          lv_obj_set_style_transform_pivot_x(obj, LV_PCT(50), 0);
+          lv_obj_set_style_transform_pivot_y(obj, LV_PCT(50), 0);
           lv_anim_t a;
           lv_anim_init(&a);
           lv_anim_set_var(&a, obj);
-          lv_anim_set_values(&a, 256, 290);
-          lv_anim_set_time(&a, 600);
-          lv_anim_set_playback_time(&a, 600);
+          lv_anim_set_values(&a, 256, 275);
+          lv_anim_set_time(&a, 500);
+          lv_anim_set_reverse_time(&a, 500);
           lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
           lv_anim_set_exec_cb(&a, [](void *obj, int32_t val) {
               lv_obj_set_style_transform_zoom((lv_obj_t *)obj, val, 0);
@@ -252,12 +262,14 @@ script:
       - lambda: |-
           lv_obj_t *obj = id(icon_deny);
           lv_anim_del(obj, NULL);
+          lv_obj_set_style_transform_pivot_x(obj, LV_PCT(50), 0);
+          lv_obj_set_style_transform_pivot_y(obj, LV_PCT(50), 0);
           lv_anim_t a;
           lv_anim_init(&a);
           lv_anim_set_var(&a, obj);
-          lv_anim_set_values(&a, 256, 290);
-          lv_anim_set_time(&a, 300);
-          lv_anim_set_playback_time(&a, 300);
+          lv_anim_set_values(&a, 256, 300);
+          lv_anim_set_time(&a, 250);
+          lv_anim_set_reverse_time(&a, 250);
           lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
           lv_anim_set_exec_cb(&a, [](void *obj, int32_t val) {
               lv_obj_set_style_transform_zoom((lv_obj_t *)obj, val, 0);
@@ -282,8 +294,10 @@ script:
       - lvgl.page.show: { id: page_custom, animation: NONE }
       - delay: 3s
 
-      # --- 8. ENDE: Willkommen (Dauerhaft bis zum naechsten Befehl) ---
+      # --- 8. ENDE: Willkommen, dann Neustart nach kurzer Pause ---
       - lvgl.page.show: { id: page_welcome, animation: FADE_IN }
+      - delay: 5s
+      - script.execute: demo_loop
 
 esp32:
   board: esp32-s3-devkitc-1
@@ -539,7 +553,7 @@ lvgl:
               - label:
                   text: "Pruefe..."
                   text_font: font_huge_bold
-                  text_color: 0xAAAAAA
+                  text_color: 0xFFFFFF
                   align: LEFT_MID
                   x: 160
 
