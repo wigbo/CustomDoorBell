@@ -12,12 +12,10 @@ esphome:
     priority: -100
     then:
       - light.turn_on: backlight_power
-      - delay: 0.1s
+      - delay: 100ms
       - lvgl.page.show: { id: page_boot, animation: NONE }
-      - delay: 3s
-      - lvgl.page.show: { id: page_idle, animation: NONE }
-      - delay: 0.2s
-      - light.turn_off: backlight_power
+      - delay: 2s
+      - script.execute: demo_loop
 
 logger:
   level: DEBUG
@@ -155,6 +153,11 @@ api:
             lv_obj_set_style_transform_zoom(id(icon_deny), 256, 0);
         - lvgl.page.show: { id: page_welcome, animation: FADE_IN }
 
+    # DEMO: Demo-Durchlauf manuell neu starten (z.B. nach Änderungen)
+    - service: run_demo
+      then:
+        - script.execute: demo_loop
+
     # CUSTOM MESSAGE
     - service: show_custom
       variables:
@@ -175,6 +178,112 @@ api:
         - light.turn_on: backlight_power
         - delay: 0.1s
         - lvgl.page.show: { id: page_custom, animation: NONE }
+
+# ----------------------------------------------------------------
+# DEMO-SCRIPT: Alle Cases automatisch durchlaufen
+# Timings bewusst kürzer als Produktion (für schnelles Testen):
+#   Klingel: 4s statt 15s | Zutritt/Deny: 3s statt 5s
+# ----------------------------------------------------------------
+script:
+  - id: demo_loop
+    mode: restart
+    then:
+      # --- 1. WILLKOMMEN ---
+      - lvgl.page.show: { id: page_welcome, animation: NONE }
+      - delay: 3s
+
+      # --- 2. KLINGELN ---
+      - lvgl.page.show: { id: page_ringing, animation: NONE }
+      - delay: 100ms
+      - lambda: |-
+          lv_obj_t *obj = id(icon_bell);
+          lv_anim_del(obj, NULL);
+          lv_anim_t a;
+          lv_anim_init(&a);
+          lv_anim_set_var(&a, obj);
+          lv_anim_set_values(&a, 256, 290);
+          lv_anim_set_time(&a, 800);
+          lv_anim_set_playback_time(&a, 800);
+          lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
+          lv_anim_set_exec_cb(&a, [](void *obj, int32_t val) {
+              lv_obj_set_style_transform_zoom((lv_obj_t *)obj, val, 0);
+              lv_obj_invalidate((lv_obj_t *)obj);
+          });
+          lv_anim_start(&a);
+      - delay: 4s
+      - lambda: |-
+          lv_anim_del(id(icon_bell), NULL);
+          lv_obj_set_style_transform_zoom(id(icon_bell), 256, 0);
+      - lvgl.page.show: { id: page_welcome, animation: FADE_IN }
+      - delay: 1s
+
+      # --- 3. VERARBEITUNG ---
+      - lvgl.page.show: { id: page_processing, animation: NONE }
+      - delay: 2s
+
+      # --- 4. ZUTRITT GEWÄHRT ---
+      - lvgl.page.show: { id: page_grant, animation: NONE }
+      - delay: 100ms
+      - lambda: |-
+          lv_obj_t *obj = id(icon_grant);
+          lv_anim_del(obj, NULL);
+          lv_anim_t a;
+          lv_anim_init(&a);
+          lv_anim_set_var(&a, obj);
+          lv_anim_set_values(&a, 256, 290);
+          lv_anim_set_time(&a, 600);
+          lv_anim_set_playback_time(&a, 600);
+          lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
+          lv_anim_set_exec_cb(&a, [](void *obj, int32_t val) {
+              lv_obj_set_style_transform_zoom((lv_obj_t *)obj, val, 0);
+              lv_obj_invalidate((lv_obj_t *)obj);
+          });
+          lv_anim_start(&a);
+      - delay: 3s
+      - lambda: |-
+          lv_anim_del(id(icon_grant), NULL);
+          lv_obj_set_style_transform_zoom(id(icon_grant), 256, 0);
+      - lvgl.page.show: { id: page_welcome, animation: FADE_IN }
+      - delay: 1s
+
+      # --- 5. ZUGRIFF VERWEIGERT ---
+      - lvgl.page.show: { id: page_deny, animation: NONE }
+      - delay: 100ms
+      - lambda: |-
+          lv_obj_t *obj = id(icon_deny);
+          lv_anim_del(obj, NULL);
+          lv_anim_t a;
+          lv_anim_init(&a);
+          lv_anim_set_var(&a, obj);
+          lv_anim_set_values(&a, 256, 290);
+          lv_anim_set_time(&a, 300);
+          lv_anim_set_playback_time(&a, 300);
+          lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
+          lv_anim_set_exec_cb(&a, [](void *obj, int32_t val) {
+              lv_obj_set_style_transform_zoom((lv_obj_t *)obj, val, 0);
+              lv_obj_invalidate((lv_obj_t *)obj);
+          });
+          lv_anim_start(&a);
+      - delay: 3s
+      - lambda: |-
+          lv_anim_del(id(icon_deny), NULL);
+          lv_obj_set_style_transform_zoom(id(icon_deny), 256, 0);
+      - lvgl.page.show: { id: page_welcome, animation: FADE_IN }
+      - delay: 1s
+
+      # --- 6. PAKET ---
+      - lvgl.page.show: { id: page_package, animation: NONE }
+      - delay: 3s
+
+      # --- 7. CUSTOM (Beispiel-Nachricht) ---
+      - lambda: |-
+          lv_label_set_text(id(lbl_custom_icon), "\U0000E15B");
+          lv_label_set_text(id(lbl_custom_text), "Muell raus!");
+      - lvgl.page.show: { id: page_custom, animation: NONE }
+      - delay: 3s
+
+      # --- 8. ENDE: Willkommen (Dauerhaft bis zum naechsten Befehl) ---
+      - lvgl.page.show: { id: page_welcome, animation: FADE_IN }
 
 esp32:
   board: esp32-s3-devkitc-1
@@ -226,6 +335,7 @@ font:
       - "\U0000E87D" # favorite (Herz)
       - "\U0000E88A" # home (Haus)
       - "\U0000E15B" # delete (Müll)
+      - "\U0000E561" # hourglass_empty (Verarbeitung)
 
 spi:
   id: qspi_bus
@@ -407,6 +517,29 @@ lvgl:
                   text: "STOPP"
                   text_font: font_huge_bold
                   text_color: 0xFFFFFF
+                  align: LEFT_MID
+                  x: 160
+
+    # --- VERARBEITUNG (Fingerprint erkannt, HA prüft) ---
+    - id: page_processing
+      styles: [clean_style]
+      widgets:
+        - obj:
+            width: 100%
+            height: 100%
+            bg_color: 0x000000
+            styles: [clean_style]
+            widgets:
+              - label:
+                  text: "\U0000E561"
+                  text_font: font_icons
+                  text_color: 0xFFEB3B
+                  align: LEFT_MID
+                  x: 40
+              - label:
+                  text: "Pruefe..."
+                  text_font: font_huge_bold
+                  text_color: 0xAAAAAA
                   align: LEFT_MID
                   x: 160
 
