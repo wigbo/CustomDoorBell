@@ -1,0 +1,97 @@
+substitutions:
+  name: "access-frontend"
+  friendly_name: "AMOLED Display Terminal"
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  project:
+    name: "custom.smart_access_frontend"
+    version: "1.0"
+
+esp32:
+  board: esp32-s3-devkitc-1
+  flash_size: 16MB
+  framework:
+    type: esp-idf
+
+# ==========================================
+# HARDWARE OPTIMIERUNG
+# ==========================================
+# Zwingend notwendig für hochauflösende 
+# Animationen auf dem AMOLED.
+psram:
+  mode: octal
+  speed: 80MHz
+
+# ==========================================
+# KOMMUNIKATION & LOGGING
+# ==========================================
+logger:
+  level: INFO
+  # Logging über UART deaktivieren, falls es mit unserer 
+  # Bridge kollidiert. Hier nutzen wir aber getrennte Pins.
+
+# UART-Bridge Empfänger (Vom Backend)
+uart:
+  id: uart_input
+  tx_pin: GPIO0  # Verbunden mit GPIO18 (RX) am Backend
+  rx_pin: GPIO1  # Verbunden mit GPIO19 (TX) am Backend
+  baud_rate: 115200
+  debug:
+    direction: RX
+    dummy_receiver: false
+    after:
+      delimiter: "\n"
+    sequence:
+      - lambda: |-
+          std::string msg = x;
+          ESP_LOGI("UART_CMD", "Befehl empfangen: %s", msg.c_str());
+          
+          if (msg == "SUCCESS" || msg == "OPEN") {
+            // Hier Trigger für LVGL "Zutritt gewährt" Animation
+            // id(disp_ui).show_access_granted();
+            ESP_LOGI("UI", "Zeige: ZUTRITT GEWÄHRT");
+          } 
+          else if (msg == "DENIED") {
+            // Hier Trigger für LVGL "Stopp" Animation
+            // id(disp_ui).show_access_denied();
+            ESP_LOGI("UI", "Zeige: ZUGRIFF VERWEIGERT");
+          } 
+          else if (msg == "PROCESSING") {
+            // Ladebildschirm / Sanduhr
+            ESP_LOGI("UI", "Zeige: VERARBEITE DATEN");
+          } 
+          else if (msg == "DOORBELL") {
+            // Klingel-Animation aufrufen
+            ESP_LOGI("UI", "Zeige: KLINGEL-EVENT");
+          }
+          else if (msg == "IDLE") {
+            // Display abdunkeln oder Hintergrund anzeigen
+            ESP_LOGI("UI", "Zeige: IDLE (Willkommen)");
+          }
+
+# ==========================================
+# AMOLED PANEL CONTROL
+# ==========================================
+# Hard-Power-Cut (Vermeidung von OLED-Glow und Einbrennen)
+switch:
+  - platform: gpio
+    pin: GPIO38
+    id: amoled_power
+    name: "AMOLED Power"
+    restore_mode: ALWAYS_ON
+
+# ==========================================
+# DISPLAY ENGINE (Platzhalter)
+# ==========================================
+# Hier folgt die Display-Definition. Da ESPHome QSPI-AMOLEDs 
+# oft über Custom-Components anbindet, hier die Struktur:
+# 
+# display:
+#   - platform: rm67162
+#     id: disp_ui
+#     # SPI/QSPI Pins
+#     cs_pin: GPIO...
+#     data_pins: ...
+#     update_interval: 16ms # ~60fps
