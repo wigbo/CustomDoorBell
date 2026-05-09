@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CustomDoorBell – Display Mockup</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Material+Icons&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #111;
+      font-family: sans-serif;
+      padding: 40px;
+      color: #ccc;
+    }
+
+    h1 {
+      font-size: 18px;
+      font-weight: 400;
+      color: #888;
+      margin-bottom: 8px;
+      letter-spacing: 0.05em;
+    }
+    h1 span { color: #fff; font-weight: 700; }
+
+    .meta {
+      font-size: 12px;
+      color: #555;
+      margin-bottom: 40px;
+      font-family: monospace;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, auto);
+      gap: 40px 48px;
+    }
+
+    .screen-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .screen-label {
+      font-family: monospace;
+      font-size: 11px;
+      color: #555;
+      display: flex;
+      justify-content: space-between;
+    }
+    .screen-label span { color: #333; }
+
+    /* Das eigentliche "Display" – 536×240 wie nach rotation: 270 */
+    .screen {
+      width: 536px;
+      height: 240px;
+      position: relative;
+      overflow: hidden;
+      border-radius: 6px;
+      border: 1px solid #2a2a2a;
+      box-shadow: 0 0 0 1px #000, 0 4px 24px rgba(0,0,0,0.6);
+    }
+
+    /* AMOLED-Glow-Simulation: subtiler Rand-Glow für farbige Screens */
+    .screen.glow-green  { box-shadow: 0 0 0 1px #000, 0 0 20px rgba(27,94,32,0.5); }
+    .screen.glow-red    { box-shadow: 0 0 0 1px #000, 0 0 20px rgba(183,28,28,0.5); }
+    .screen.glow-cyan   { box-shadow: 0 0 0 1px #000, 0 0 20px rgba(0,229,255,0.2); }
+
+    /* Layout-Helper */
+    .left-mid {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+
+    /* Fonts */
+    .font-icon {
+      font-family: 'Material Icons';
+      font-size: 80px;
+      line-height: 1;
+      /* Icons aren't ligature-based here – using unicode directly */
+    }
+
+    .font-huge-bold {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700;
+      font-size: 55px;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .font-large {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 400;
+      font-size: 35px;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .font-medium {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 400;
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    /* Animierter Puls-Ring (Klingel) */
+    @keyframes pulse {
+      0%, 100% { transform: translateY(-50%) scale(1); }
+      50%       { transform: translateY(-50%) scale(1.15); }
+    }
+    .anim-pulse { animation: pulse 0.7s ease-in-out infinite; }
+
+    @keyframes pulse-calm {
+      0%, 100% { transform: translateY(-50%) scale(1); }
+      50%       { transform: translateY(-50%) scale(1.075); }
+    }
+    .anim-calm { animation: pulse-calm 0.5s ease-in-out infinite; }
+
+    @keyframes pulse-alarm {
+      0%, 100% { transform: translateY(-50%) scale(1); }
+      50%       { transform: translateY(-50%) scale(1.17); }
+    }
+    .anim-alarm { animation: pulse-alarm 0.25s ease-in-out infinite; }
+
+    /* Hintergrundbild-Simulation (Willkommen) */
+    .bg-welcome {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, #0a1628 0%, #1a2a1a 40%, #0a0a0a 100%);
+      opacity: 0.8;
+    }
+    .bg-welcome::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 30% 50%, rgba(40,80,60,0.4) 0%, transparent 60%),
+                  radial-gradient(ellipse at 70% 50%, rgba(20,40,80,0.3) 0%, transparent 60%);
+    }
+
+    /* Separator */
+    .section-title {
+      grid-column: 1 / -1;
+      font-size: 11px;
+      font-family: monospace;
+      color: #444;
+      border-bottom: 1px solid #222;
+      padding-bottom: 8px;
+      margin-top: 8px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>CustomDoorBell <span>Display Mockup</span></h1>
+  <p class="meta">536 × 240 px &nbsp;|&nbsp; AMOLED RM67162 &nbsp;|&nbsp; rotation: 270° &nbsp;|&nbsp; Stand: doorbell-display.yaml</p>
+
+  <div class="grid">
+
+    <!-- ===== SYSTEM ===== -->
+    <div class="section-title">System</div>
+
+    <!-- IDLE -->
+    <div class="screen-wrap">
+      <div class="screen-label">page_idle <span>Panel wird danach abgeschaltet</span></div>
+      <div class="screen" style="background:#000;">
+        <!-- komplett schwarz, kein Inhalt -->
+        <div class="center font-medium" style="color:#1a1a1a;">[ Panel off ]</div>
+      </div>
+    </div>
+
+    <!-- BOOT -->
+    <div class="screen-wrap">
+      <div class="screen-label">page_boot <span>3s beim Start</span></div>
+      <div class="screen" style="background:#000;">
+        <div class="center font-medium" style="color:#666;">System Start</div>
+      </div>
+    </div>
+
+    <!-- WILLKOMMEN -->
+    <div class="screen-wrap">
+      <div class="screen-label">page_welcome <span>Normalzustand bei Bewegung</span></div>
+      <div class="screen" style="background:#000;">
+        <div class="bg-welcome"></div>
+        <div class="center" style="z-index:1;">
+          <div class="font-large" style="color:#AAAAAA; margin-bottom:16px;">Willkommen</div>
+          <div class="font-huge-bold" style="color:#FFFFFF;">FAMILIE TULUM</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== EVENTS ===== -->
+    <div class="section-title">Events</div>
+
+    <!-- VERARBEITUNG -->
+    <div class="screen-wrap">
+      <div class="screen-label">page_processing <span>Fingerprint erkannt → HA prüft</span></div>
+      <div class="screen" style="background:#000;">
+        <span class="left-mid font-icon" style="left:40px; color:#FFEB3B;">&#xE561;</span>
+        <span class="left-mid font-huge-bold" style="left:160px; color:#FFFFFF;">Pruefe...</span>
+      </div>
+    </div>
+
+    <!-- KLINGELN -->
+    <div class="screen-wrap">
+      <div class="screen-label">page_ringing <span>15s · Puls-Animation ∿ 700ms</span></div>
+      <div class="screen glow-cyan" style="background:#000;">
+        <span class="left-mid font-icon anim-pulse" style="left:40px; color:#00E5FF;">&#xE7F4;</span>
+        <span class="left-mid font-large" style="left:160px; color:#FFFFFF;">Es klingelt</span>
+      </div>
+    </div>
+
+    <!-- PAKET -->
+    <div class="screen-wrap">
+      <div class="screen-label">page_package <span>Bleibt bis zum nächsten Befehl</span></div>
+      <div class="screen" style="background:#000;">
+        <span class="left-mid font-icon" style="left:40px; color:#FFEB3B;">&#xE58F;</span>
+        <span class="left-mid font-huge-bold" style="left:160px; color:#FFFFFF;">PAKET</span>
+      </div>
+    </div>
+
+    <!-- ===== ZUTRITT ===== -->
+    <div class="section-title">Zutritt</div>
+
+    <!-- ZUTRITT GEWÄHRT -->
+    <div class="screen-wrap">
+      <div class="screen-label">page_grant <span>5s · sanfte Animation ∿ 500ms</span></div>
+      <div class="screen glow-green" style="background:#1B5E20;">
+        <span class="left-mid font-icon anim-calm" style="left:40px; color:#FFFFFF;">&#xEF64;</span>
+        <span class="left-mid font-huge-bold" style="left:160px; color:#FFFFFF;">OFFEN</span>
+      </div>
+    </div>
+
+    <!-- ZUGRIFF VERWEIGERT -->
+    <div class="screen-wrap">
+      <div class="screen-label">page_deny <span>5s · Alarm-Animation ∿ 250ms</span></div>
+      <div class="screen glow-red" style="background:#B71C1C;">
+        <span class="left-mid font-icon anim-alarm" style="left:40px; color:#FFFFFF;">&#xE5C9;</span>
+        <span class="left-mid font-huge-bold" style="left:160px; color:#FFFFFF;">STOPP</span>
+      </div>
+    </div>
+
+    <!-- ===== CUSTOM ===== -->
+    <div class="section-title">Custom</div>
+
+    <!-- CUSTOM: Müll -->
+    <div class="screen-wrap">
+      <div class="screen-label">page_custom <span>icon=muell</span></div>
+      <div class="screen" style="background:#333;">
+        <span class="left-mid font-icon" style="left:40px; color:#FFFFFF;">&#xE15B;</span>
+        <span class="left-mid font-huge-bold" style="left:160px; color:#FFFFFF;">Muell raus!</span>
+      </div>
+    </div>
+
+    <!-- CUSTOM: Warnung -->
+    <div class="screen-wrap">
+      <div class="screen-label">page_custom <span>icon=warnung</span></div>
+      <div class="screen" style="background:#333;">
+        <span class="left-mid font-icon" style="left:40px; color:#FFFFFF;">&#xE002;</span>
+        <span class="left-mid font-huge-bold" style="left:160px; color:#FFFFFF;">Achtung!</span>
+      </div>
+    </div>
+
+    <!-- CUSTOM: Herz -->
+    <div class="screen-wrap">
+      <div class="screen-label">page_custom <span>icon=herz</span></div>
+      <div class="screen" style="background:#333;">
+        <span class="left-mid font-icon" style="left:40px; color:#FFFFFF;">&#xE87D;</span>
+        <span class="left-mid font-huge-bold" style="left:160px; color:#FFFFFF;">Willkommen!</span>
+      </div>
+    </div>
+
+  </div><!-- /grid -->
+
+  <p style="margin-top:48px; font-size:11px; color:#333; font-family:monospace;">
+    Fonts: Montserrat (Google Fonts) · Material Icons (Google Fonts) · Animationen simuliert via CSS
+  </p>
+
+</body>
+</html>
