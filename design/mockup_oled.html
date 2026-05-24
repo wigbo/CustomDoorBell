@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>CustomDoorBell – OLED 256×64 Mockup</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #111;
+      font-family: sans-serif;
+      padding: 40px;
+      color: #aaa;
+    }
+
+    h1 {
+      font-size: 16px;
+      font-weight: 400;
+      color: #888;
+      margin-bottom: 6px;
+    }
+    h1 span { color: #fff; font-weight: 700; }
+    .meta { font-size: 11px; color: #444; margin-bottom: 12px; font-family: monospace; }
+
+    /* Farb-Switcher */
+    .color-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 40px;
+      align-items: center;
+    }
+    .color-bar span { font-size: 11px; color: #555; font-family: monospace; }
+    .color-btn {
+      width: 28px; height: 28px;
+      border-radius: 4px;
+      border: 2px solid #333;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .color-btn:hover, .color-btn.active { border-color: #fff; }
+    .color-btn.white  { background: #fff; }
+    .color-btn.blue   { background: #4FC3F7; }
+    .color-btn.yellow { background: #FFD54F; }
+    .color-btn.green  { background: #69F0AE; }
+
+    /* Grid */
+    .grid { display: grid; grid-template-columns: repeat(2, auto); gap: 36px 48px; }
+    .screen-wrap { display: flex; flex-direction: column; gap: 10px; }
+    .screen-label {
+      font-family: monospace; font-size: 11px; color: #555;
+      display: flex; justify-content: space-between;
+    }
+    .screen-label em { color: #333; font-style: normal; }
+
+    .section-title {
+      grid-column: 1 / -1;
+      font-size: 10px;
+      font-family: monospace;
+      color: #444;
+      border-bottom: 1px solid #222;
+      padding-bottom: 6px;
+      margin-top: 8px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    /* Das OLED-Display: 256×64 bei 3× Scale = 768×192 */
+    .oled {
+      width: 768px;
+      height: 192px;
+      background: #000;
+      position: relative;
+      overflow: hidden;
+      border-radius: 3px;
+      border: 1px solid #1a1a1a;
+      /* Subtiler OLED-Scan-Effekt */
+      background-image: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.08) 2px,
+        rgba(0,0,0,0.08) 3px
+      );
+    }
+
+    /* Invertierteter Modus (für Alert-Screens) */
+    .oled.inverted { background: var(--oled-color, #fff); }
+    .oled.inverted .px { color: #000 !important; text-shadow: none !important; }
+    .oled.inverted .border-decoration { border-color: #000; }
+    .oled.inverted .progress-bar { background: #000; }
+    .oled.inverted .progress-track { background: rgba(0,0,0,0.2); }
+
+    /* Schriften / Grössen (3× skaliert) */
+    .px {
+      color: var(--oled-color, #fff);
+      text-shadow: 0 0 10px var(--oled-glow, rgba(255,255,255,0.5));
+      position: absolute;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    /* Fonts in 3× Skalierung: 24px real → 72px, 16px real → 48px, etc. */
+    .f-xl  { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 90px; } /* ~30px real */
+    .f-lg  { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 66px; } /* ~22px real */
+    .f-md  { font-family: 'Montserrat', sans-serif; font-weight: 400; font-size: 45px; } /* ~15px real */
+    .f-sm  { font-family: 'Share Tech Mono', monospace; font-size: 33px; }              /* ~11px real */
+
+    /* Layout-Helper */
+    .center-abs {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    .vcenter { position: absolute; top: 50%; transform: translateY(-50%); }
+    .hcenter { position: absolute; left: 50%; transform: translateX(-50%); }
+
+    /* Icon-Zone (links, 192px = 64px real) */
+    .icon-zone {
+      position: absolute;
+      left: 0; top: 0;
+      width: 192px; height: 192px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    /* Text-Zone (rechts, ab 192px) */
+    .text-zone {
+      position: absolute;
+      left: 192px; top: 0;
+      width: 576px; height: 192px;
+      display: flex; flex-direction: column;
+      justify-content: center;
+      padding-left: 18px;
+      gap: 10px;
+    }
+    .text-zone .px { position: static; }
+
+    /* Dekorations-Rahmen (für Willkommen) */
+    .border-decoration {
+      position: absolute;
+      border: 3px solid var(--oled-color, #fff);
+      box-shadow: 0 0 8px var(--oled-glow, rgba(255,255,255,0.3));
+    }
+
+    /* Progress-Bar */
+    .progress-track {
+      position: absolute;
+      height: 9px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 2px;
+    }
+    .progress-bar {
+      height: 100%;
+      background: var(--oled-color, #fff);
+      box-shadow: 0 0 6px var(--oled-glow, rgba(255,255,255,0.5));
+      border-radius: 2px;
+    }
+
+    /* Pulsierende Animation (Klingel) */
+    @keyframes oled-pulse {
+      0%,100% { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+      50%      { opacity: 0.7; transform: translate(-50%,-50%) scale(1.05); }
+    }
+    .anim-pulse { animation: oled-pulse 0.7s ease-in-out infinite; }
+
+    /* Blink (Verweigert) */
+    @keyframes oled-blink {
+      0%,49% { opacity: 1; }
+      50%,100% { opacity: 0.2; }
+    }
+    .anim-blink { animation: oled-blink 0.4s step-end infinite; }
+
+    /* Animierte Punkte (Processing) */
+    @keyframes dot1 { 0%,33%,100% { opacity:1 } 34%,66% { opacity:0.2 } }
+    @keyframes dot2 { 0%,16%,66%,100% { opacity:0.2 } 33%,49% { opacity:1 } }
+    @keyframes dot3 { 0%,49%,100% { opacity:0.2 } 66%,82% { opacity:1 } }
+    .dot1 { animation: dot1 1.2s infinite; }
+    .dot2 { animation: dot2 1.2s infinite; }
+    .dot3 { animation: dot3 1.2s infinite; }
+
+    /* Rahmen-Blink für Grant */
+    @keyframes border-pulse {
+      0%,100% { opacity: 1; }
+      50%      { opacity: 0.3; }
+    }
+    .anim-border { animation: border-pulse 0.5s ease-in-out infinite; }
+
+    /* Divider Linie */
+    .divider {
+      position: absolute;
+      top: 0; bottom: 0;
+      left: 192px;
+      width: 2px;
+      background: var(--oled-color, #fff);
+      opacity: 0.15;
+    }
+
+    /* Progress Mockup */
+    @keyframes progress-anim {
+      0%   { width: 5%; }
+      100% { width: 75%; }
+    }
+    .progress-fill { animation: progress-anim 2s ease-out forwards; }
+
+  </style>
+</head>
+<body>
+
+  <h1>CustomDoorBell <span>OLED Mockup</span></h1>
+  <p class="meta">256 × 64 px &nbsp;·&nbsp; SSD1322 &nbsp;·&nbsp; 3:1 aspect ratio &nbsp;·&nbsp; angezeigt in 3× Zoom (768×192)</p>
+
+  <!-- Farb-Auswahl -->
+  <div class="color-bar">
+    <span>Displayfarbe:</span>
+    <div class="color-btn white active" onclick="setColor('#fff','rgba(255,255,255,0.5)')" title="Weiß"></div>
+    <div class="color-btn blue"  onclick="setColor('#4FC3F7','rgba(79,195,247,0.5)')"  title="Blau"></div>
+    <div class="color-btn yellow" onclick="setColor('#FFD54F','rgba(255,213,79,0.5)')" title="Gelb"></div>
+    <div class="color-btn green"  onclick="setColor('#69F0AE','rgba(105,240,174,0.5)')" title="Grün"></div>
+  </div>
+
+  <div class="grid">
+
+    <!-- ===== SYSTEM ===== -->
+    <div class="section-title">System</div>
+
+    <!-- IDLE -->
+    <div class="screen-wrap">
+      <div class="screen-label">page_idle <em>Display aus / Panel off</em></div>
+      <div class="oled">
+        <!-- komplett schwarz, kein Inhalt -->
+      </div>
+    </div>
+
+    <!-- WILLKOMMEN -->
+    <div class="screen-wrap">
+      <div class="screen-label">page_welcome <em>bei Bewegungserkennung</em></div>
+      <div class="oled">
+        <!-- Dekorativer Rahmen -->
+        <div class="border-decoration" style="left:12px;top:12px;right:12px;bottom:12px; border-radius:3px;"></div>
+        <!-- Inhalt -->
+        <div class="center-abs" style="text-align:center; gap:12px; display:flex; flex-direction:column; align-items:center;">
+          <div class="px f-sm" style="letter-spacing:0.15em; opacity:0.7;">Willkommen</div>
+          <div class="px f-lg" style="position:static; letter-spacing:0.05em;">FAMILIE TULUM</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== EVENTS ===== -->
+    <div class="section-title">Events</div>
+
+    <!-- KLINGELN -->
+    <div class="screen-wrap">
+      <div class="screen-label">page_ringing <em>INVERTIERT · Puls-Animation</em></div>
+      <div class="oled inverted">
+        <div class="border-decoration anim-border" style="left:6px;top:6px;right:6px;bottom:6px; border-width:4px; border-radius:2px;"></div>
+        <div class="icon-zone">
+          <div class="px f-xl anim-pulse" style="position:static; font-size:108px;">◉</div>
+        </div>
+        <div class="divider"></div>
+        <div class="text-zone">
+          <div class="px f-lg" style="position:static;">KLINGELT!</div>
+          <div class="px f-sm" style="position:static; opacity:0.6;">Bitte einen Moment...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROCESSING -->
+    <div class="screen-wrap">
+      <div class="screen-label">page_processing <em>Fingerprint erkannt → HA prüft</em></div>
+      <div class="oled">
+        <div class="icon-zone">
+          <div class="px f-xl" style="position:static; font-size:84px; opacity:0.9;">⏳</div>
+        </div>
+        <div class="divider"></div>
+        <div class="text-zone">
+          <div class="px f-md" style="position:static;">
+            Pruefe<span class="dot1">.</span><span class="dot2">.</span><span class="dot3">.</span>
+          </div>
+          <!-- Progress Bar -->
+          <div style="position:relative; width:100%;">
+            <div class="progress-track" style="width:90%; left:0; top:0; position:relative;">
+              <div class="progress-bar progress-fill" style="width:60%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAKET -->
+    <div class="screen-wrap">
+      <div class="screen-label">page_package <em>bleibt bis zum nächsten Befehl</em></div>
+      <div class="oled">
+        <div class="icon-zone">
+          <div class="px f-xl" style="position:static; font-size:96px;">⬜</div>
+        </div>
+        <div class="divider"></div>
+        <div class="text-zone">
+          <div class="px f-lg" style="position:static;">PAKET</div>
+          <div class="px f-sm" style="position:static; opacity:0.6;">Bitte abholen</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ZUTRITT ===== -->
+    <div class="section-title">Zutritt</div>
+
+    <!-- GRANT -->
+    <div class="screen-wrap">
+      <div class="screen-label">page_grant <em>INVERTIERT · 5s</em></div>
+      <div class="oled inverted">
+        <div class="icon-zone">
+          <div class="px f-xl" style="position:static; font-size:132px; font-weight:900;">✓</div>
+        </div>
+        <div class="divider"></div>
+        <div class="text-zone">
+          <div class="px f-xl" style="position:static; font-size:96px; font-family:'Montserrat',sans-serif; font-weight:900;">OFFEN</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DENIED -->
+    <div class="screen-wrap">
+      <div class="screen-label">page_deny <em>INVERTIERT · blinkt · 5s</em></div>
+      <div class="oled inverted">
+        <div class="icon-zone">
+          <div class="px f-xl anim-blink" style="position:static; font-size:132px; font-weight:900;">✗</div>
+        </div>
+        <div class="divider"></div>
+        <div class="text-zone">
+          <div class="px f-xl" style="position:static; font-size:96px; font-family:'Montserrat',sans-serif; font-weight:900;">STOPP</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== CUSTOM ===== -->
+    <div class="section-title">Custom</div>
+
+    <!-- CUSTOM: Müll -->
+    <div class="screen-wrap">
+      <div class="screen-label">page_custom <em>icon=muell</em></div>
+      <div class="oled">
+        <div class="icon-zone">
+          <div class="px f-xl" style="position:static; font-size:90px;">🗑</div>
+        </div>
+        <div class="divider"></div>
+        <div class="text-zone">
+          <div class="px f-md" style="position:static;">Muell rausstellen</div>
+          <div class="px f-sm" style="position:static; opacity:0.6;">Heute: Restmuell</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CUSTOM: Warnung -->
+    <div class="screen-wrap">
+      <div class="screen-label">page_custom <em>icon=warnung</em></div>
+      <div class="oled">
+        <div class="icon-zone">
+          <div class="px f-xl" style="position:static; font-size:108px;">⚠</div>
+        </div>
+        <div class="divider"></div>
+        <div class="text-zone">
+          <div class="px f-md" style="position:static;">Tuer nicht</div>
+          <div class="px f-md" style="position:static;">vergessen!</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /grid -->
+
+  <div style="margin-top:48px; font-size:11px; color:#333; font-family:monospace; line-height:2;">
+    Inversion = wirkungsvollste visuelle Differenzierung auf Monochrom-OLED<br>
+    Animationen: Klingel pulsiert · Denied blinkt · Processing hat animierte Punkte + Fortschrittsbalken<br>
+    Farbe oben wählbar — Empfehlung: Weiß (neutral) oder Blau (tech)
+  </div>
+
+  <script>
+    function setColor(color, glow) {
+      document.documentElement.style.setProperty('--oled-color', color);
+      document.documentElement.style.setProperty('--oled-glow', glow);
+      document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+    }
+    // Default
+    document.documentElement.style.setProperty('--oled-color', '#fff');
+    document.documentElement.style.setProperty('--oled-glow', 'rgba(255,255,255,0.5)');
+  </script>
+
+</body>
+</html>
