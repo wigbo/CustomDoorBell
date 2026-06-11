@@ -9,7 +9,7 @@ esphome:
   name_add_mac_suffix: false
   project:
     name: "custom.doorbell"
-    version: "3.0"
+    version: "4.2"
 
   on_boot:
     priority: -100
@@ -19,6 +19,8 @@ esphome:
       - lvgl.page.show: { id: page_boot, animation: NONE }
       - delay: 2s
       - lvgl.page.show: { id: page_idle, animation: FADE_IN }
+      - delay: 500ms
+      - light.turn_off: backlight
 
 esp32:
   board: esp32-s3-devkitc-1
@@ -32,16 +34,15 @@ psram:
 
 # ─────────────────────────────────────────────────────────────────
 # NETZWERK: W5500 Ethernet
-# Pins gemäß Waveshare ESP32-S3-ETH Pinout-Diagramm
 # ─────────────────────────────────────────────────────────────────
 ethernet:
   type: W5500
-  clk_pin: GPIO13    # ETH_CLK
-  mosi_pin: GPIO11   # ETH_MOSI
-  miso_pin: GPIO12   # ETH_MISO
-  cs_pin: GPIO14     # ETH_CS
-  interrupt_pin: GPIO10  # ETH_INT
-  reset_pin: GPIO9   # ETH_RST
+  clk_pin: GPIO13
+  mosi_pin: GPIO11
+  miso_pin: GPIO12
+  cs_pin: GPIO14
+  interrupt_pin: GPIO10
+  reset_pin: GPIO9
 
 # ─────────────────────────────────────────────────────────────────
 # OTA & LOGGING
@@ -58,7 +59,6 @@ logger:
 # ─────────────────────────────────────────────────────────────────
 api:
   services:
-    # Normalzustand — Display aus (Panel bleibt an, Inhalt schwarz)
     - service: set_idle
       then:
         - script.stop: timed_doorbell
@@ -68,9 +68,12 @@ api:
             lv_anim_del(id(icon_bell),  NULL);
             lv_anim_del(id(icon_grant), NULL);
             lv_anim_del(id(icon_deny),  NULL);
-        - lvgl.page.show: { id: page_idle, animation: FADE_IN }
+            lv_anim_del(id(icon_process), NULL);
+            lv_anim_del(id(icon_package), NULL);
+            lv_anim_del(id(lbl_custom_icon), NULL);
+        - lvgl.page.show: { id: page_idle, animation: NONE }
+        - light.turn_off: backlight
 
-    # Bewegung erkannt → Begrüßungsscreen
     - service: show_welcome
       then:
         - script.stop: timed_doorbell
@@ -80,10 +83,12 @@ api:
             lv_anim_del(id(icon_bell),  NULL);
             lv_anim_del(id(icon_grant), NULL);
             lv_anim_del(id(icon_deny),  NULL);
+            lv_anim_del(id(icon_process), NULL);
+            lv_anim_del(id(icon_package), NULL);
+            lv_anim_del(id(lbl_custom_icon), NULL);
         - light.turn_on: backlight
         - lvgl.page.show: { id: page_welcome, animation: NONE }
 
-    # Klingel gedrückt (15s mit Puls-Animation)
     - service: trigger_doorbell
       then:
         - script.stop: timed_grant
@@ -91,10 +96,12 @@ api:
         - lambda: |-
             lv_anim_del(id(icon_grant), NULL);
             lv_anim_del(id(icon_deny),  NULL);
+            lv_anim_del(id(icon_process), NULL);
+            lv_anim_del(id(icon_package), NULL);
+            lv_anim_del(id(lbl_custom_icon), NULL);
         - light.turn_on: backlight
         - script.execute: timed_doorbell
 
-    # Fingerabdruck erkannt → HA prüft (kein Timeout, HA schickt Ergebnis)
     - service: show_processing
       then:
         - script.stop: timed_doorbell
@@ -104,10 +111,27 @@ api:
             lv_anim_del(id(icon_bell),  NULL);
             lv_anim_del(id(icon_grant), NULL);
             lv_anim_del(id(icon_deny),  NULL);
+            lv_anim_del(id(icon_package), NULL);
+            lv_anim_del(id(lbl_custom_icon), NULL);
         - light.turn_on: backlight
         - lvgl.page.show: { id: page_processing, animation: NONE }
+        # Rotiere die Sanduhr weich
+        - lambda: |-
+            lv_obj_t *obj = id(icon_process);
+            lv_anim_del(obj, NULL);
+            lv_obj_set_style_transform_pivot_x(obj, LV_PCT(50), 0);
+            lv_obj_set_style_transform_pivot_y(obj, LV_PCT(50), 0);
+            lv_anim_t a; lv_anim_init(&a);
+            lv_anim_set_var(&a, obj);
+            lv_anim_set_values(&a, 0, 3600);
+            lv_anim_set_time(&a, 2000);
+            lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
+            lv_anim_set_exec_cb(&a, [](void *obj, int32_t val) {
+                lv_obj_set_style_transform_angle((lv_obj_t *)obj, val, 0);
+                lv_obj_invalidate((lv_obj_t *)obj);
+            });
+            lv_anim_start(&a);
 
-    # Zutritt gewährt (5s mit sanfter Animation)
     - service: show_access_granted
       then:
         - script.stop: timed_doorbell
@@ -115,10 +139,12 @@ api:
         - lambda: |-
             lv_anim_del(id(icon_bell), NULL);
             lv_anim_del(id(icon_deny), NULL);
+            lv_anim_del(id(icon_process), NULL);
+            lv_anim_del(id(icon_package), NULL);
+            lv_anim_del(id(lbl_custom_icon), NULL);
         - light.turn_on: backlight
         - script.execute: timed_grant
 
-    # Zutritt verweigert (5s mit Alarm-Animation)
     - service: show_access_denied
       then:
         - script.stop: timed_doorbell
@@ -126,10 +152,12 @@ api:
         - lambda: |-
             lv_anim_del(id(icon_bell),  NULL);
             lv_anim_del(id(icon_grant), NULL);
+            lv_anim_del(id(icon_process), NULL);
+            lv_anim_del(id(icon_package), NULL);
+            lv_anim_del(id(lbl_custom_icon), NULL);
         - light.turn_on: backlight
         - script.execute: timed_deny
 
-    # Paket-Lieferung (bleibt bis set_idle oder nächstem Befehl)
     - service: show_package
       then:
         - script.stop: timed_doorbell
@@ -139,11 +167,27 @@ api:
             lv_anim_del(id(icon_bell),  NULL);
             lv_anim_del(id(icon_grant), NULL);
             lv_anim_del(id(icon_deny),  NULL);
+            lv_anim_del(id(icon_process), NULL);
+            lv_anim_del(id(lbl_custom_icon), NULL);
         - light.turn_on: backlight
         - lvgl.page.show: { id: page_package, animation: NONE }
+        # Pop-In Animation (Overshoot)
+        - lambda: |-
+            lv_obj_t *obj = id(icon_package);
+            lv_anim_del(obj, NULL);
+            lv_obj_set_style_transform_pivot_x(obj, LV_PCT(50), 0);
+            lv_obj_set_style_transform_pivot_y(obj, LV_PCT(50), 0);
+            lv_anim_t a; lv_anim_init(&a);
+            lv_anim_set_var(&a, obj);
+            lv_anim_set_values(&a, 10, 256);
+            lv_anim_set_time(&a, 600);
+            lv_anim_set_path_cb(&a, lv_anim_path_overshoot);
+            lv_anim_set_exec_cb(&a, [](void *obj, int32_t val) {
+                lv_obj_set_style_transform_zoom((lv_obj_t *)obj, val, 0);
+                lv_obj_invalidate((lv_obj_t *)obj);
+            });
+            lv_anim_start(&a);
 
-    # Freie Nachricht mit Icon (bleibt bis set_idle oder nächstem Befehl)
-    # icon: info | warnung | herz | haus | muell
     - service: show_custom
       variables:
         message: string
@@ -156,7 +200,9 @@ api:
             lv_anim_del(id(icon_bell),  NULL);
             lv_anim_del(id(icon_grant), NULL);
             lv_anim_del(id(icon_deny),  NULL);
-            const char* icon_str = "\U0000E887";  // info (default)
+            lv_anim_del(id(icon_process), NULL);
+            lv_anim_del(id(icon_package), NULL);
+            const char* icon_str = "\U0000E887"; 
             if      (icon == "warnung") icon_str = "\U0000E002";
             else if (icon == "herz")    icon_str = "\U0000E87D";
             else if (icon == "haus")    icon_str = "\U0000E88A";
@@ -165,19 +211,31 @@ api:
             lv_label_set_text(id(lbl_custom_text), message.c_str());
         - light.turn_on: backlight
         - lvgl.page.show: { id: page_custom, animation: NONE }
+        # Pop-In Animation für das Custom Icon
+        - lambda: |-
+            lv_obj_t *obj = id(lbl_custom_icon);
+            lv_anim_del(obj, NULL);
+            lv_obj_set_style_transform_pivot_x(obj, LV_PCT(50), 0);
+            lv_obj_set_style_transform_pivot_y(obj, LV_PCT(50), 0);
+            lv_anim_t a; lv_anim_init(&a);
+            lv_anim_set_var(&a, obj);
+            lv_anim_set_values(&a, 10, 256);
+            lv_anim_set_time(&a, 600);
+            lv_anim_set_path_cb(&a, lv_anim_path_overshoot);
+            lv_anim_set_exec_cb(&a, [](void *obj, int32_t val) {
+                lv_obj_set_style_transform_zoom((lv_obj_t *)obj, val, 0);
+                lv_obj_invalidate((lv_obj_t *)obj);
+            });
+            lv_anim_start(&a);
 
-    # Demo-Durchlauf (alle Screens, für Hardware-Test)
     - service: run_demo
       then:
         - script.execute: demo_loop
 
 # ─────────────────────────────────────────────────────────────────
 # SCRIPTS: Timed animations
-# mode: restart → laufender Zustand wird unterbrochen wenn erneut
-#                 aufgerufen (z.B. zweite Klingel während erster)
 # ─────────────────────────────────────────────────────────────────
 script:
-  # Klingel (15s, Puls ∿700ms, dringend)
   - id: timed_doorbell
     mode: restart
     then:
@@ -188,8 +246,7 @@ script:
           lv_anim_del(obj, NULL);
           lv_obj_set_style_transform_pivot_x(obj, LV_PCT(50), 0);
           lv_obj_set_style_transform_pivot_y(obj, LV_PCT(50), 0);
-          lv_anim_t a;
-          lv_anim_init(&a);
+          lv_anim_t a; lv_anim_init(&a);
           lv_anim_set_var(&a, obj);
           lv_anim_set_values(&a, 256, 295);
           lv_anim_set_time(&a, 700);
@@ -206,7 +263,6 @@ script:
           lv_obj_set_style_transform_zoom(id(icon_bell), 256, 0);
       - lvgl.page.show: { id: page_welcome, animation: FADE_IN }
 
-  # Zutritt gewährt (5s, sanfter Puls ∿500ms)
   - id: timed_grant
     mode: restart
     then:
@@ -217,8 +273,7 @@ script:
           lv_anim_del(obj, NULL);
           lv_obj_set_style_transform_pivot_x(obj, LV_PCT(50), 0);
           lv_obj_set_style_transform_pivot_y(obj, LV_PCT(50), 0);
-          lv_anim_t a;
-          lv_anim_init(&a);
+          lv_anim_t a; lv_anim_init(&a);
           lv_anim_set_var(&a, obj);
           lv_anim_set_values(&a, 256, 275);
           lv_anim_set_time(&a, 500);
@@ -235,7 +290,6 @@ script:
           lv_obj_set_style_transform_zoom(id(icon_grant), 256, 0);
       - lvgl.page.show: { id: page_welcome, animation: FADE_IN }
 
-  # Zutritt verweigert (5s, harter Alarm-Beat ∿250ms)
   - id: timed_deny
     mode: restart
     then:
@@ -244,144 +298,74 @@ script:
       - lambda: |-
           lv_obj_t *obj = id(icon_deny);
           lv_anim_del(obj, NULL);
-          lv_obj_set_style_transform_pivot_x(obj, LV_PCT(50), 0);
-          lv_obj_set_style_transform_pivot_y(obj, LV_PCT(50), 0);
-          lv_anim_t a;
-          lv_anim_init(&a);
+          lv_obj_set_style_translate_x(obj, 0, 0); // Reset position
+          lv_anim_t a; lv_anim_init(&a);
           lv_anim_set_var(&a, obj);
-          lv_anim_set_values(&a, 256, 300);
-          lv_anim_set_time(&a, 250);
-          lv_anim_set_reverse_time(&a, 250);
-          lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
+          lv_anim_set_values(&a, -15, 15); // Shake amplitude
+          lv_anim_set_time(&a, 60);        // Speed of shake
+          lv_anim_set_reverse_time(&a, 60);
+          lv_anim_set_repeat_count(&a, 8); // Number of shakes
           lv_anim_set_exec_cb(&a, [](void *obj, int32_t val) {
-              lv_obj_set_style_transform_zoom((lv_obj_t *)obj, val, 0);
+              lv_obj_set_style_translate_x((lv_obj_t *)obj, val, 0);
               lv_obj_invalidate((lv_obj_t *)obj);
+          });
+          // Ensure it resets to center when animation ends
+          lv_anim_set_ready_cb(&a, [](lv_anim_t *a) {
+              lv_obj_set_style_translate_x((lv_obj_t *)a->var, 0, 0);
+              lv_obj_invalidate((lv_obj_t *)a->var);
           });
           lv_anim_start(&a);
       - delay: 5s
       - lambda: |-
           lv_anim_del(id(icon_deny), NULL);
-          lv_obj_set_style_transform_zoom(id(icon_deny), 256, 0);
+          lv_obj_set_style_translate_x(id(icon_deny), 0, 0);
       - lvgl.page.show: { id: page_welcome, animation: FADE_IN }
 
-  # Demo-Loop: alle Screens automatisch durchlaufen (Hardware-Test)
-  # Timings kürzer als Produktion: Klingel 4s, Zutritt 3s
   - id: demo_loop
     mode: restart
     then:
       - light.turn_on: backlight
       - lvgl.page.show: { id: page_welcome, animation: NONE }
       - delay: 3s
-      - lvgl.page.show: { id: page_ringing, animation: NONE }
-      - delay: 100ms
-      - lambda: |-
-          lv_obj_t *obj = id(icon_bell);
-          lv_anim_del(obj, NULL);
-          lv_obj_set_style_transform_pivot_x(obj, LV_PCT(50), 0);
-          lv_obj_set_style_transform_pivot_y(obj, LV_PCT(50), 0);
-          lv_anim_t a; lv_anim_init(&a);
-          lv_anim_set_var(&a, obj);
-          lv_anim_set_values(&a, 256, 295);
-          lv_anim_set_time(&a, 700);
-          lv_anim_set_reverse_time(&a, 700);
-          lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
-          lv_anim_set_exec_cb(&a, [](void *obj, int32_t val) {
-              lv_obj_set_style_transform_zoom((lv_obj_t *)obj, val, 0);
-              lv_obj_invalidate((lv_obj_t *)obj);
-          });
-          lv_anim_start(&a);
-      - delay: 4s
-      - lambda: |-
-          lv_anim_del(id(icon_bell), NULL);
-          lv_obj_set_style_transform_zoom(id(icon_bell), 256, 0);
-      - lvgl.page.show: { id: page_welcome, animation: FADE_IN }
-      - delay: 1s
-      - lvgl.page.show: { id: page_processing, animation: NONE }
-      - delay: 2s
-      - lvgl.page.show: { id: page_grant, animation: NONE }
-      - delay: 100ms
-      - lambda: |-
-          lv_obj_t *obj = id(icon_grant);
-          lv_anim_del(obj, NULL);
-          lv_obj_set_style_transform_pivot_x(obj, LV_PCT(50), 0);
-          lv_obj_set_style_transform_pivot_y(obj, LV_PCT(50), 0);
-          lv_anim_t a; lv_anim_init(&a);
-          lv_anim_set_var(&a, obj);
-          lv_anim_set_values(&a, 256, 275);
-          lv_anim_set_time(&a, 500);
-          lv_anim_set_reverse_time(&a, 500);
-          lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
-          lv_anim_set_exec_cb(&a, [](void *obj, int32_t val) {
-              lv_obj_set_style_transform_zoom((lv_obj_t *)obj, val, 0);
-              lv_obj_invalidate((lv_obj_t *)obj);
-          });
-          lv_anim_start(&a);
-      - delay: 3s
-      - lambda: |-
-          lv_anim_del(id(icon_grant), NULL);
-          lv_obj_set_style_transform_zoom(id(icon_grant), 256, 0);
-      - lvgl.page.show: { id: page_welcome, animation: FADE_IN }
-      - delay: 1s
-      - lvgl.page.show: { id: page_deny, animation: NONE }
-      - delay: 100ms
-      - lambda: |-
-          lv_obj_t *obj = id(icon_deny);
-          lv_anim_del(obj, NULL);
-          lv_obj_set_style_transform_pivot_x(obj, LV_PCT(50), 0);
-          lv_obj_set_style_transform_pivot_y(obj, LV_PCT(50), 0);
-          lv_anim_t a; lv_anim_init(&a);
-          lv_anim_set_var(&a, obj);
-          lv_anim_set_values(&a, 256, 300);
-          lv_anim_set_time(&a, 250);
-          lv_anim_set_reverse_time(&a, 250);
-          lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
-          lv_anim_set_exec_cb(&a, [](void *obj, int32_t val) {
-              lv_obj_set_style_transform_zoom((lv_obj_t *)obj, val, 0);
-              lv_obj_invalidate((lv_obj_t *)obj);
-          });
-          lv_anim_start(&a);
-      - delay: 3s
-      - lambda: |-
-          lv_anim_del(id(icon_deny), NULL);
-          lv_obj_set_style_transform_zoom(id(icon_deny), 256, 0);
-      - lvgl.page.show: { id: page_welcome, animation: FADE_IN }
-      - delay: 1s
-      - lvgl.page.show: { id: page_package, animation: NONE }
-      - delay: 3s
-      - lambda: |-
-          lv_label_set_text(id(lbl_custom_icon), "\U0000E15B");
-          lv_label_set_text(id(lbl_custom_text), "Muell raus!");
-      - lvgl.page.show: { id: page_custom, animation: NONE }
-      - delay: 3s
-      - lvgl.page.show: { id: page_welcome, animation: FADE_IN }
+      - homeassistant.service:
+          service: esphome.doorbell_trigger_doorbell
       - delay: 5s
-      - script.execute: demo_loop
+      - homeassistant.service:
+          service: esphome.doorbell_show_processing
+      - delay: 3s
+      - homeassistant.service:
+          service: esphome.doorbell_show_access_granted
+      - delay: 6s
+      - homeassistant.service:
+          service: esphome.doorbell_show_access_denied
+      - delay: 6s
+      - homeassistant.service:
+          service: esphome.doorbell_show_package
+      - delay: 4s
+      - homeassistant.service:
+          service: esphome.doorbell_show_custom
+          data:
+            icon: "muell"
+            message: "Muell raus!"
+      - delay: 4s
+      - homeassistant.service:
+          service: esphome.doorbell_set_idle
 
 # ─────────────────────────────────────────────────────────────────
-# BUS-SYSTEME
+# BUS-SYSTEME & SENSOREN
 # ─────────────────────────────────────────────────────────────────
-
-# I2C: PN532 NFC Reader
-# Hinweis: GPIO4/5 = SD-Karten-Pins auf diesem Board. Da kein
-# SD-Slot genutzt wird, sind sie als I2C frei verwendbar.
 i2c:
   id: i2c_bus
   sda: GPIO4
   scl: GPIO5
   scan: true
 
-# UART: Fingerabdruck-Scanner Grow R503
 uart:
   id: uart_finger
   tx_pin: GPIO17
   rx_pin: GPIO16
   baud_rate: 57600
 
-# ─────────────────────────────────────────────────────────────────
-# SENSOREN: NFC & Fingerprint
-# ─────────────────────────────────────────────────────────────────
-
-# NFC (PN532): Scan-Event → HA entscheidet
 pn532_i2c:
   id: nfc_reader
   update_interval: 1s
@@ -391,13 +375,7 @@ pn532_i2c:
           event: esphome.access_nfc_scan
           data:
             uid: !lambda 'return x;'
-      - logger.log:
-          format: "NFC Tag: %s"
-          args: ['x.c_str()']
 
-# Fingerprint (Grow R503):
-#   Match   → sofort PROCESSING zeigen + Event an HA
-#   No-Match → sofort DENIED zeigen (kein HA-Event nötig)
 fingerprint_grow:
   id: fingerprint_reader
   uart_id: uart_finger
@@ -405,32 +383,21 @@ fingerprint_grow:
     - script.stop: timed_doorbell
     - script.stop: timed_grant
     - script.stop: timed_deny
-    - lambda: |-
-        lv_anim_del(id(icon_bell),  NULL);
-        lv_anim_del(id(icon_grant), NULL);
-        lv_anim_del(id(icon_deny),  NULL);
-    - lvgl.page.show: { id: page_processing, animation: NONE }
+    - homeassistant.service:
+          service: esphome.doorbell_show_processing
     - homeassistant.event:
         event: esphome.access_finger_scan
         data:
           finger_id:  !lambda 'return to_string(finger_id);'
           confidence: !lambda 'return to_string(confidence);'
-    - logger.log:
-        format: "Fingerabdruck Match: ID=%d Confidence=%d"
-        args: ['finger_id', 'confidence']
   on_finger_scan_unmatched:
     - script.stop: timed_doorbell
     - script.stop: timed_grant
-    - lambda: |-
-        lv_anim_del(id(icon_bell),  NULL);
-        lv_anim_del(id(icon_grant), NULL);
-    - script.execute: timed_deny
-    - logger.log: "Fingerabdruck: Kein Match → DENIED"
+    - homeassistant.service:
+          service: esphome.doorbell_show_access_denied
 
 # ─────────────────────────────────────────────────────────────────
-# DISPLAY: ST7789 1.9" (170×320, landscape via rotation: 90°)
-# Pin-Mapping: SCL=GPIO36  SDA=GPIO35  RES=GPIO40
-#              DC=GPIO39   CS=GPIO37   BLK=GPIO42
+# DISPLAY & HARDWARE
 # ─────────────────────────────────────────────────────────────────
 output:
   - platform: gpio
@@ -442,7 +409,7 @@ light:
     output: display_backlight_gpio
     id: backlight
     name: "Display Backlight"
-    restore_mode: ALWAYS_ON
+    restore_mode: ALWAYS_OFF
 
 spi:
   - id: spi_display
@@ -457,27 +424,26 @@ display:
     cs_pin: GPIO37
     dc_pin: GPIO39
     reset_pin: GPIO40
-    rotation: 90     # Landscape: effektiv 320×170 px
+    rotation: 90
     update_interval: 16ms
     auto_clear_enabled: false
 
 # ─────────────────────────────────────────────────────────────────
 # FONTS
-# Größen angepasst auf 170px Display-Höhe (statt 240px AMOLED)
 # ─────────────────────────────────────────────────────────────────
 font:
   - file: "gfonts://Montserrat@700"
     id: font_huge_bold
-    size: 45
+    size: 40
   - file: "gfonts://Montserrat"
     id: font_large
-    size: 30
+    size: 26
   - file: "gfonts://Montserrat"
     id: font_medium
     size: 20
   - file: "gfonts://Material Icons"
     id: font_icons
-    size: 60
+    size: 55
     glyphs:
       - "\U0000EF64"  # check_circle   (Zutritt)
       - "\U0000E5C9"  # cancel         (Verweigert)
@@ -491,8 +457,7 @@ font:
       - "\U0000E561"  # hourglass      (Verarbeitung)
 
 # ─────────────────────────────────────────────────────────────────
-# LVGL: Display-Seiten
-# Koordinaten für 320×170 px Landscape
+# LVGL: Display-Seiten & Styles
 # ─────────────────────────────────────────────────────────────────
 lvgl:
   displays:
@@ -500,23 +465,27 @@ lvgl:
   buffer_size: 25%
 
   style_definitions:
-    - id: clean_style
+    - id: base_style
       border_width: 0
       radius: 0
       pad_all: 0
       bg_opa: COVER
+      bg_color: 0x000000
+    
+    - id: card_style
+      radius: 12
+      border_width: 2
+      bg_opa: COVER
 
   pages:
-
-    # ── IDLE: Bildschirm schwarz ──────────────────────────────────
+    # ── IDLE ─────────────────────────────────────────────────────
     - id: page_idle
       bg_color: 0x000000
       widgets:
         - obj:
             width: 100%
             height: 100%
-            bg_color: 0x000000
-            styles: [clean_style]
+            styles: [base_style]
 
     # ── BOOT ─────────────────────────────────────────────────────
     - id: page_boot
@@ -525,8 +494,7 @@ lvgl:
         - obj:
             width: 100%
             height: 100%
-            bg_color: 0x000000
-            styles: [clean_style]
+            styles: [base_style]
             widgets:
               - label:
                   text: "System Start"
@@ -541,116 +509,159 @@ lvgl:
         - obj:
             width: 100%
             height: 100%
-            bg_color: 0x000000
-            styles: [clean_style]
+            styles: [base_style]
             widgets:
-              - label:
-                  text: "Willkommen"
-                  text_font: font_large
+              - obj:
+                  width: 304
+                  height: 154
                   align: CENTER
-                  y: -28
-                  text_color: 0xAAAAAA
-              - label:
-                  text: "FAMILIE TULUM"
-                  text_font: font_huge_bold
-                  align: CENTER
-                  y: 22
-                  text_color: 0xFFFFFF
+                  styles: [card_style]
+                  bg_color: 0x0A0A0A
+                  border_color: 0x333333
+                  widgets:
+                    - label:
+                        text: "Willkommen"
+                        text_font: font_large
+                        align: CENTER
+                        y: -32
+                        text_color: 0xAAAAAA
+                    - obj:
+                        width: 180
+                        height: 2
+                        align: CENTER
+                        y: 0
+                        bg_color: 0x222222
+                        styles: [base_style]
+                    - label:
+                        text: "FAMILIE TULUM"
+                        text_font: font_huge_bold
+                        align: CENTER
+                        y: 32
+                        text_color: 0xFFFFFF
 
-    # ── KLINGELN (Cyan, Puls-Animation) ──────────────────────────
+    # ── KLINGELN ─────────────────────────────────────────────────
     - id: page_ringing
       bg_color: 0x000000
       widgets:
         - obj:
             width: 100%
             height: 100%
-            bg_color: 0x000000
-            styles: [clean_style]
+            styles: [base_style]
             widgets:
-              - label:
-                  id: icon_bell
-                  text: "\U0000E7F4"
-                  text_font: font_icons
-                  text_color: 0x00E5FF
-                  align: LEFT_MID
-                  x: 30
-              - label:
-                  text: "Es klingelt"
-                  text_font: font_large
-                  align: LEFT_MID
-                  x: 115
-                  text_color: 0xFFFFFF
+              - obj:
+                  width: 304
+                  height: 154
+                  align: CENTER
+                  styles: [card_style]
+                  bg_color: 0x001B2E
+                  border_color: 0x00E5FF
+                  widgets:
+                    - label:
+                        id: icon_bell
+                        text: "\U0000E7F4"
+                        text_font: font_icons
+                        text_color: 0x00E5FF
+                        align: CENTER
+                        y: -22
+                    - label:
+                        text: "Es klingelt"
+                        text_font: font_large
+                        text_color: 0xFFFFFF
+                        align: CENTER
+                        y: 28
 
-    # ── VERARBEITUNG (Fingerprint erkannt, HA prüft) ──────────────
+    # ── VERARBEITUNG ──────────────────────────────────────────────
     - id: page_processing
       bg_color: 0x000000
       widgets:
         - obj:
             width: 100%
             height: 100%
-            bg_color: 0x000000
-            styles: [clean_style]
+            styles: [base_style]
             widgets:
-              - label:
-                  text: "\U0000E561"
-                  text_font: font_icons
-                  text_color: 0xFFEB3B
-                  align: LEFT_MID
-                  x: 30
-              - label:
-                  text: "Pruefe..."
-                  text_font: font_huge_bold
-                  text_color: 0xFFFFFF
-                  align: LEFT_MID
-                  x: 115
+              - obj:
+                  width: 304
+                  height: 154
+                  align: CENTER
+                  styles: [card_style]
+                  bg_color: 0x102027
+                  border_color: 0xFFEB3B
+                  widgets:
+                    - label:
+                        id: icon_process
+                        text: "\U0000E561"
+                        text_font: font_icons
+                        text_color: 0xFFEB3B
+                        align: CENTER
+                        y: -22
+                    - label:
+                        text: "Pruefe..."
+                        text_font: font_huge_bold
+                        text_color: 0xFFFFFF
+                        align: CENTER
+                        y: 28
 
-    # ── ZUTRITT GEWÄHRT (Grün, sanfte Animation) ─────────────────
+    # ── ZUTRITT GEWÄHRT ──────────────────────────────────────────
     - id: page_grant
-      bg_color: 0x1B5E20
+      bg_color: 0x000000
       widgets:
         - obj:
             width: 100%
             height: 100%
-            bg_color: 0x1B5E20
-            styles: [clean_style]
+            styles: [base_style]
             widgets:
-              - label:
-                  id: icon_grant
-                  text: "\U0000EF64"
-                  text_font: font_icons
-                  text_color: 0xFFFFFF
-                  align: LEFT_MID
-                  x: 30
-              - label:
-                  text: "OFFEN"
-                  text_font: font_huge_bold
-                  text_color: 0xFFFFFF
-                  align: LEFT_MID
-                  x: 115
+              - obj:
+                  width: 304
+                  height: 154
+                  align: CENTER
+                  styles: [card_style]
+                  bg_color: 0x1B5E20
+                  border_color: 0x4CAF50
+                  widgets:
+                    - label:
+                        id: icon_grant
+                        text: "\U0000EF64"
+                        text_font: font_icons
+                        text_color: 0xFFFFFF
+                        align: CENTER
+                        y: -22
+                    - label:
+                        text: "OFFEN"
+                        text_font: font_huge_bold
+                        text_color: 0xFFFFFF
+                        align: CENTER
+                        y: 28
 
-    # ── ZUTRITT VERWEIGERT (Rot, Alarm-Animation) ─────────────────
+    # ── ZUTRITT VERWEIGERT ───────────────────────────────────────
     - id: page_deny
-      bg_color: 0xB71C1C
+      bg_color: 0x000000
       widgets:
         - obj:
             width: 100%
             height: 100%
-            bg_color: 0xB71C1C
-            styles: [clean_style]
+            styles: [base_style]
             widgets:
-              - label:
-                  id: icon_deny
-                  text: "\U0000E5C9"
-                  text_font: font_icons
-                  text_color: 0xFFFFFF
-                  align: LEFT_MID
-                  x: 30
-              - label:
-                  text: "STOPP"
-                  text_font: font_huge_bold
-                  text_color: 0xFFFFFF
-                  align: LEFT_MID
-                  x: 115
+              - obj:
+                  width: 304
+                  height: 154
+                  align: CENTER
+                  styles: [card_style]
+                  bg_color: 0xB71C1C
+                  border_color: 0xFF5252
+                  widgets:
+                    - label:
+                        id: icon_deny
+                        text: "\U0000E5C9"
+                        text_font: font_icons
+                        text_color: 0xFFFFFF
+                        align: CENTER
+                        y: -22
+                    - label:
+                        text: "STOPP"
+                        text_font: font_huge_bold
+                        text_color: 0xFFFFFF
+                        align: CENTER
+                        y: 28
 
     # ── PAKET ─────────────────────────────────────────────────────
     - id: page_package
@@ -659,45 +670,61 @@ lvgl:
         - obj:
             width: 100%
             height: 100%
-            bg_color: 0x000000
-            styles: [clean_style]
+            styles: [base_style]
             widgets:
-              - label:
-                  text: "\U0000E58F"
-                  text_font: font_icons
-                  text_color: 0xFFEB3B
-                  align: LEFT_MID
-                  x: 30
-              - label:
-                  text: "PAKET"
-                  text_font: font_huge_bold
-                  text_color: 0xFFFFFF
-                  align: LEFT_MID
-                  x: 115
+              - obj:
+                  width: 304
+                  height: 154
+                  align: CENTER
+                  styles: [card_style]
+                  bg_color: 0x3E2723
+                  border_color: 0xFFB300
+                  widgets:
+                    - label:
+                        id: icon_package
+                        text: "\U0000E58F"
+                        text_font: font_icons
+                        text_color: 0xFFEB3B
+                        align: CENTER
+                        y: -22
+                    - label:
+                        text: "PAKET"
+                        text_font: font_huge_bold
+                        text_color: 0xFFFFFF
+                        align: CENTER
+                        y: 28
 
-    # ── CUSTOM: Freie Nachricht ───────────────────────────────────
+    # ── CUSTOM ───────────────────────────────────────────────────
     - id: page_custom
-      bg_color: 0x1A1A2E
+      bg_color: 0x000000
       widgets:
         - obj:
             width: 100%
             height: 100%
-            bg_color: 0x1A1A2E
-            styles: [clean_style]
+            styles: [base_style]
             widgets:
-              - label:
-                  id: lbl_custom_icon
-                  text: "\U0000E887"
-                  text_font: font_icons
-                  text_color: 0xFFFFFF
-                  align: LEFT_MID
-                  x: 30
-              - label:
-                  id: lbl_custom_text
-                  text: "..."
-                  text_font: font_large
-                  text_color: 0xFFFFFF
-                  align: LEFT_MID
-                  x: 115
-                  long_mode: WRAP
-                  width: 190
+              - obj:
+                  width: 304
+                  height: 154
+                  align: CENTER
+                  styles: [card_style]
+                  bg_color: 0x1A1A2E
+                  border_color: 0x7E57C2
+                  widgets:
+                    - label:
+                        id: lbl_custom_icon
+                        text: "\U0000E887"
+                        text_font: font_icons
+                        text_color: 0xFFFFFF
+                        align: CENTER
+                        y: -30
+                    - label:
+                        id: lbl_custom_text
+                        text: "..."
+                        text_font: font_large
+                        text_color: 0xFFFFFF
+                        text_align: CENTER
+                        align: CENTER
+                        y: 25
+                        long_mode: WRAP
+                        width: 280
