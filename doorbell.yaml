@@ -563,12 +563,21 @@ font:
   - file: "gfonts://Montserrat@700"
     id: font_huge_bold
     size: 40
+    extras:
+      - file: "gfonts://Montserrat@700"
+        glyphs: "äöüÄÖÜß"
   - file: "gfonts://Montserrat"
     id: font_large
     size: 26
+    extras:
+      - file: "gfonts://Montserrat"
+        glyphs: "äöüÄÖÜß"
   - file: "gfonts://Montserrat"
     id: font_medium
     size: 20
+    extras:
+      - file: "gfonts://Montserrat"
+        glyphs: "äöüÄÖÜß"
   - file: "gfonts://Material Icons"
     id: font_icons
     size: 55

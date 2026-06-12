@@ -527,7 +527,7 @@ display:
     model: ILI9341
     cs_pin: GPIO15
     dc_pin: GPIO2
-    rotation: 0      # 320×240 Landscape
+    rotation: 90     # 320×240 Landscape
     invert_colors: false
     update_interval: never
     auto_clear_enabled: false
@@ -539,12 +539,21 @@ font:
   - file: "gfonts://Montserrat@700"
     id: font_huge_bold
     size: 40
+    extras:
+      - file: "gfonts://Montserrat@700"
+        glyphs: "äöüÄÖÜß"
   - file: "gfonts://Montserrat"
     id: font_large
     size: 26
+    extras:
+      - file: "gfonts://Montserrat"
+        glyphs: "äöüÄÖÜß"
   - file: "gfonts://Montserrat"
     id: font_medium
     size: 20
+    extras:
+      - file: "gfonts://Montserrat"
+        glyphs: "äöüÄÖÜß"
   - file: "gfonts://Material Icons"
     id: font_icons
     size: 55
@@ -660,14 +669,14 @@ lvgl:
                   height: 154
                   align: CENTER
                   styles: [card_style]
-                  bg_color: 0x001B2E
-                  border_color: 0x00E5FF
+                  bg_color: 0x2E1B00
+                  border_color: 0xFFE500
                   widgets:
                     - label:
                         id: icon_bell
                         text: "\U0000E7F4"
                         text_font: font_icons
-                        text_color: 0x00E5FF
+                        text_color: 0xFFE500
                         align: CENTER
                         y: -22
                     - label:
@@ -691,14 +700,14 @@ lvgl:
                   height: 154
                   align: CENTER
                   styles: [card_style]
-                  bg_color: 0x102027
-                  border_color: 0xFFEB3B
+                  bg_color: 0x272010
+                  border_color: 0x3BEBFF
                   widgets:
                     - label:
                         id: icon_process
                         text: "\U0000E90D"
                         text_font: font_icons
-                        text_color: 0xFFEB3B
+                        text_color: 0x3BEBFF
                         align: CENTER
                         y: -22
                     - label:
@@ -722,8 +731,8 @@ lvgl:
                   height: 154
                   align: CENTER
                   styles: [card_style]
-                  bg_color: 0x1B5E20
-                  border_color: 0x4CAF50
+                  bg_color: 0x205E1B
+                  border_color: 0x50AF4C
                   widgets:
                     - label:
                         id: icon_grant
@@ -753,8 +762,8 @@ lvgl:
                   height: 154
                   align: CENTER
                   styles: [card_style]
-                  bg_color: 0xB71C1C
-                  border_color: 0xFF5252
+                  bg_color: 0x1C1CB7
+                  border_color: 0x5252FF
                   widgets:
                     - label:
                         id: icon_deny
@@ -784,14 +793,14 @@ lvgl:
                   height: 154
                   align: CENTER
                   styles: [card_style]
-                  bg_color: 0x3E2723
-                  border_color: 0xFFB300
+                  bg_color: 0x23273E
+                  border_color: 0x00B3FF
                   widgets:
                     - label:
                         id: icon_package
                         text: "\U0000E58F"
                         text_font: font_icons
-                        text_color: 0xFFEB3B
+                        text_color: 0x3BEBFF
                         align: CENTER
                         y: -22
                     - label:
@@ -815,8 +824,8 @@ lvgl:
                   height: 154
                   align: CENTER
                   styles: [card_style]
-                  bg_color: 0x1A1A2E
-                  border_color: 0x7E57C2
+                  bg_color: 0x2E1A1A
+                  border_color: 0xC2577E
                   widgets:
                     - label:
                         id: lbl_custom_icon
@@ -850,13 +859,13 @@ lvgl:
                   height: 154
                   align: CENTER
                   styles: [card_style]
-                  bg_color: 0x1A0800
-                  border_color: 0xFF6D00
+                  bg_color: 0x00081A
+                  border_color: 0x006DFF
                   widgets:
                     - label:
                         text: "\U0000E002"
                         text_font: font_icons
-                        text_color: 0xFF6D00
+                        text_color: 0x006DFF
                         align: CENTER
                         y: -28
                     - label:
