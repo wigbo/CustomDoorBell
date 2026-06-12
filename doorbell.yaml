@@ -127,7 +127,7 @@ api:
             lv_anim_set_time(&a, 2000);
             lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
             lv_anim_set_exec_cb(&a, [](void *obj, int32_t val) {
-                lv_obj_set_style_transform_angle((lv_obj_t *)obj, val, 0);
+                lv_obj_set_style_transform_rotation((lv_obj_t *)obj, val, 0);
                 lv_obj_invalidate((lv_obj_t *)obj);
             });
             lv_anim_start(&a);
@@ -383,8 +383,29 @@ fingerprint_grow:
     - script.stop: timed_doorbell
     - script.stop: timed_grant
     - script.stop: timed_deny
-    - homeassistant.service:
-          service: esphome.doorbell_show_processing
+    - lambda: |-
+        lv_anim_del(id(icon_bell),  NULL);
+        lv_anim_del(id(icon_grant), NULL);
+        lv_anim_del(id(icon_deny),  NULL);
+        lv_anim_del(id(icon_package), NULL);
+        lv_anim_del(id(lbl_custom_icon), NULL);
+    - lvgl.page.show: { id: page_processing, animation: NONE }
+    - light.turn_on: backlight
+    - lambda: |-
+        lv_obj_t *obj = id(icon_process);
+        lv_anim_del(obj, NULL);
+        lv_obj_set_style_transform_pivot_x(obj, LV_PCT(50), 0);
+        lv_obj_set_style_transform_pivot_y(obj, LV_PCT(50), 0);
+        lv_anim_t a; lv_anim_init(&a);
+        lv_anim_set_var(&a, obj);
+        lv_anim_set_values(&a, 0, 3600);
+        lv_anim_set_time(&a, 2000);
+        lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
+        lv_anim_set_exec_cb(&a, [](void *obj, int32_t val) {
+            lv_obj_set_style_transform_rotation((lv_obj_t *)obj, val, 0);
+            lv_obj_invalidate((lv_obj_t *)obj);
+        });
+        lv_anim_start(&a);
     - homeassistant.event:
         event: esphome.access_finger_scan
         data:
@@ -393,8 +414,10 @@ fingerprint_grow:
   on_finger_scan_unmatched:
     - script.stop: timed_doorbell
     - script.stop: timed_grant
-    - homeassistant.service:
-          service: esphome.doorbell_show_access_denied
+    - lambda: |-
+        lv_anim_del(id(icon_bell),  NULL);
+        lv_anim_del(id(icon_grant), NULL);
+    - script.execute: timed_deny
 
 # ─────────────────────────────────────────────────────────────────
 # DISPLAY & HARDWARE
@@ -454,7 +477,7 @@ font:
       - "\U0000E87D"  # favorite       (Herz)
       - "\U0000E88A"  # home           (Haus)
       - "\U0000E15B"  # delete         (Müll)
-      - "\U0000E561"  # hourglass      (Verarbeitung)
+      - "\U0000E90D"  # fingerprint    (Verarbeitung)
 
 # ─────────────────────────────────────────────────────────────────
 # LVGL: Display-Seiten & Styles
@@ -589,7 +612,7 @@ lvgl:
                   widgets:
                     - label:
                         id: icon_process
-                        text: "\U0000E561"
+                        text: "\U0000E90D"
                         text_font: font_icons
                         text_color: 0xFFEB3B
                         align: CENTER
