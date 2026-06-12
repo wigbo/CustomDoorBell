@@ -64,6 +64,7 @@ api:
         - script.stop: timed_doorbell
         - script.stop: timed_grant
         - script.stop: timed_deny
+        - script.stop: timed_processing_watchdog
         - lambda: |-
             lv_anim_del(id(icon_bell),  NULL);
             lv_anim_del(id(icon_grant), NULL);
@@ -79,6 +80,7 @@ api:
         - script.stop: timed_doorbell
         - script.stop: timed_grant
         - script.stop: timed_deny
+        - script.stop: timed_processing_watchdog
         - lambda: |-
             lv_anim_del(id(icon_bell),  NULL);
             lv_anim_del(id(icon_grant), NULL);
@@ -93,6 +95,7 @@ api:
       then:
         - script.stop: timed_grant
         - script.stop: timed_deny
+        - script.stop: timed_processing_watchdog
         - lambda: |-
             lv_anim_del(id(icon_grant), NULL);
             lv_anim_del(id(icon_deny),  NULL);
@@ -107,6 +110,7 @@ api:
         - script.stop: timed_doorbell
         - script.stop: timed_grant
         - script.stop: timed_deny
+        - script.stop: timed_processing_watchdog
         - lambda: |-
             lv_anim_del(id(icon_bell),  NULL);
             lv_anim_del(id(icon_grant), NULL);
@@ -131,11 +135,13 @@ api:
                 lv_obj_invalidate((lv_obj_t *)obj);
             });
             lv_anim_start(&a);
+        - script.execute: timed_processing_watchdog
 
     - service: show_access_granted
       then:
         - script.stop: timed_doorbell
         - script.stop: timed_deny
+        - script.stop: timed_processing_watchdog
         - lambda: |-
             lv_anim_del(id(icon_bell), NULL);
             lv_anim_del(id(icon_deny), NULL);
@@ -149,6 +155,7 @@ api:
       then:
         - script.stop: timed_doorbell
         - script.stop: timed_grant
+        - script.stop: timed_processing_watchdog
         - lambda: |-
             lv_anim_del(id(icon_bell),  NULL);
             lv_anim_del(id(icon_grant), NULL);
@@ -163,6 +170,7 @@ api:
         - script.stop: timed_doorbell
         - script.stop: timed_grant
         - script.stop: timed_deny
+        - script.stop: timed_processing_watchdog
         - lambda: |-
             lv_anim_del(id(icon_bell),  NULL);
             lv_anim_del(id(icon_grant), NULL);
@@ -196,6 +204,7 @@ api:
         - script.stop: timed_doorbell
         - script.stop: timed_grant
         - script.stop: timed_deny
+        - script.stop: timed_processing_watchdog
         - lambda: |-
             lv_anim_del(id(icon_bell),  NULL);
             lv_anim_del(id(icon_grant), NULL);
@@ -321,6 +330,22 @@ script:
           lv_obj_set_style_translate_x(id(icon_deny), 0, 0);
       - lvgl.page.show: { id: page_welcome, animation: FADE_IN }
 
+  # Watchdog für den Processing-Zustand.
+  # Startet bei jedem Fingerabdruck-Scan. Wenn HA innerhalb von 8s
+  # nicht mit show_access_granted oder show_access_denied antwortet
+  # (HA offline, Netzwerk weg), zeigt der Nutzer ein Fehler-Feedback.
+  - id: timed_processing_watchdog
+    mode: restart
+    then:
+      - delay: 8s
+      - lambda: |-
+          lv_anim_del(id(icon_process), NULL);
+          lv_obj_set_style_transform_rotation(id(icon_process), 0, 0);
+      - lvgl.page.show: { id: page_error, animation: NONE }
+      - delay: 5s
+      - lvgl.page.show: { id: page_idle, animation: FADE_IN }
+      - light.turn_off: backlight
+
   - id: demo_loop
     mode: restart
     then:
@@ -406,6 +431,7 @@ fingerprint_grow:
             lv_obj_invalidate((lv_obj_t *)obj);
         });
         lv_anim_start(&a);
+    - script.execute: timed_processing_watchdog
     - homeassistant.event:
         event: esphome.access_finger_scan
         data:
@@ -414,6 +440,7 @@ fingerprint_grow:
   on_finger_scan_unmatched:
     - script.stop: timed_doorbell
     - script.stop: timed_grant
+    - script.stop: timed_processing_watchdog
     - lambda: |-
         lv_anim_del(id(icon_bell),  NULL);
         lv_anim_del(id(icon_grant), NULL);
@@ -751,3 +778,39 @@ lvgl:
                         y: 25
                         long_mode: WRAP
                         width: 280
+
+    # ── FEHLER / TIMEOUT ─────────────────────────────────────────
+    - id: page_error
+      bg_color: 0x000000
+      widgets:
+        - obj:
+            width: 100%
+            height: 100%
+            styles: [base_style]
+            widgets:
+              - obj:
+                  width: 304
+                  height: 154
+                  align: CENTER
+                  styles: [card_style]
+                  bg_color: 0x1A0800
+                  border_color: 0xFF6D00
+                  widgets:
+                    - label:
+                        text: "\U0000E002"
+                        text_font: font_icons
+                        text_color: 0xFF6D00
+                        align: CENTER
+                        y: -28
+                    - label:
+                        text: "Verbindung Timeout"
+                        text_font: font_medium
+                        text_color: 0xFFFFFF
+                        align: CENTER
+                        y: 20
+                    - label:
+                        text: "Bitte erneut versuchen"
+                        text_font: font_medium
+                        text_color: 0x888888
+                        align: CENTER
+                        y: 44
