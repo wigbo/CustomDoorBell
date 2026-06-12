@@ -527,7 +527,6 @@ display:
     model: ILI9341
     cs_pin: GPIO15
     dc_pin: GPIO2
-    rotation: 90     # 320×240 Landscape
     invert_colors: false
     update_interval: never
     auto_clear_enabled: false
@@ -577,6 +576,7 @@ font:
 lvgl:
   displays:
     - main_display
+  rotation: 90        # Landscape 320×240
   buffer_size: 10%    # CYD hat kein PSRAM → konservativ
 
   style_definitions:
