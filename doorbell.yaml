@@ -119,7 +119,6 @@ api:
             lv_anim_del(id(lbl_custom_icon), NULL);
         - light.turn_on: backlight
         - lvgl.page.show: { id: page_processing, animation: NONE }
-        # Rotiere die Sanduhr weich
         - lambda: |-
             lv_obj_t *obj = id(icon_process);
             lv_anim_del(obj, NULL);
@@ -127,11 +126,12 @@ api:
             lv_obj_set_style_transform_pivot_y(obj, LV_PCT(50), 0);
             lv_anim_t a; lv_anim_init(&a);
             lv_anim_set_var(&a, obj);
-            lv_anim_set_values(&a, 0, 3600);
-            lv_anim_set_time(&a, 2000);
+            lv_anim_set_values(&a, 256, 290);
+            lv_anim_set_time(&a, 700);
+            lv_anim_set_reverse_time(&a, 700);
             lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
             lv_anim_set_exec_cb(&a, [](void *obj, int32_t val) {
-                lv_obj_set_style_transform_rotation((lv_obj_t *)obj, val, 0);
+                lv_obj_set_style_transform_zoom((lv_obj_t *)obj, val, 0);
                 lv_obj_invalidate((lv_obj_t *)obj);
             });
             lv_anim_start(&a);
@@ -357,7 +357,7 @@ script:
       - delay: 8s
       - lambda: |-
           lv_anim_del(id(icon_process), NULL);
-          lv_obj_set_style_transform_rotation(id(icon_process), 0, 0);
+          lv_obj_set_style_transform_zoom(id(icon_process), 256, 0);
       - lvgl.page.show: { id: page_error, animation: NONE }
       - delay: 5s
       - lvgl.page.show: { id: page_idle, animation: FADE_IN }
@@ -388,7 +388,7 @@ script:
           service: esphome.doorbell_show_custom
           data:
             icon: "muell"
-            message: "Muell raus!"
+            message: "Müll raus!"
       - delay: 4s
       - homeassistant.service:
           service: esphome.doorbell_set_idle
@@ -447,11 +447,12 @@ fingerprint_grow:
         lv_obj_set_style_transform_pivot_y(obj, LV_PCT(50), 0);
         lv_anim_t a; lv_anim_init(&a);
         lv_anim_set_var(&a, obj);
-        lv_anim_set_values(&a, 0, 3600);
-        lv_anim_set_time(&a, 2000);
+        lv_anim_set_values(&a, 256, 290);
+        lv_anim_set_time(&a, 700);
+        lv_anim_set_reverse_time(&a, 700);
         lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
         lv_anim_set_exec_cb(&a, [](void *obj, int32_t val) {
-            lv_obj_set_style_transform_rotation((lv_obj_t *)obj, val, 0);
+            lv_obj_set_style_transform_zoom((lv_obj_t *)obj, val, 0);
             lv_obj_invalidate((lv_obj_t *)obj);
         });
         lv_anim_start(&a);
@@ -647,7 +648,7 @@ lvgl:
                   border_color: 0x333333
                   widgets:
                     - label:
-                        text: "Willkommen"
+                        text: "Willkommen bei"
                         text_font: font_large
                         align: CENTER
                         y: -32
@@ -660,7 +661,7 @@ lvgl:
                         bg_color: 0x222222
                         styles: [base_style]
                     - label:
-                        text: "FAMILIE TULUM"
+                        text: "Familie Tulum"
                         text_font: font_huge_bold
                         align: CENTER
                         y: 32
@@ -722,7 +723,7 @@ lvgl:
                         align: CENTER
                         y: -22
                     - label:
-                        text: "Pruefe..."
+                        text: "Prüfe..."
                         text_font: font_huge_bold
                         text_color: 0xFFFFFF
                         align: CENTER
@@ -753,7 +754,7 @@ lvgl:
                         align: CENTER
                         y: -22
                     - label:
-                        text: "OFFEN"
+                        text: "Tür geöffnet"
                         text_font: font_huge_bold
                         text_color: 0xFFFFFF
                         align: CENTER
