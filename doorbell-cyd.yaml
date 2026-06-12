@@ -526,6 +526,7 @@ display:
     cs_pin: GPIO15
     dc_pin: GPIO2
     rotation: 0      # 320×240 Landscape
+    invert_colors: false
     update_interval: never
     auto_clear_enabled: false
 
