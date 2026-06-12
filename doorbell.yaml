@@ -334,6 +334,23 @@ script:
   # Startet bei jedem Fingerabdruck-Scan. Wenn HA innerhalb von 8s
   # nicht mit show_access_granted oder show_access_denied antwortet
   # (HA offline, Netzwerk weg), zeigt der Nutzer ein Fehler-Feedback.
+  # Idle-Timeout nach Präsenz-Ende.
+  # Startet wenn Person den Eingang verlässt (LD2410 on_release).
+  # Geht nur in Idle wenn kein aktiver Zustand läuft (Klingel etc.)
+  - id: presence_idle_timeout
+    mode: restart
+    then:
+      - delay: 30s
+      - if:
+          condition:
+            lambda: |-
+              return !id(timed_doorbell).is_running() &&
+                     !id(timed_grant).is_running() &&
+                     !id(timed_deny).is_running();
+          then:
+            - lvgl.page.show: { id: page_idle, animation: FADE_IN }
+            - light.turn_off: backlight
+
   - id: timed_processing_watchdog
     mode: restart
     then:
@@ -386,10 +403,17 @@ i2c:
   scan: true
 
 uart:
-  id: uart_finger
-  tx_pin: GPIO17
-  rx_pin: GPIO16
-  baud_rate: 57600
+  # Fingerabdruck-Scanner Grow R503
+  - id: uart_finger
+    tx_pin: GPIO17
+    rx_pin: GPIO16
+    baud_rate: 57600
+
+  # LD2410 mmWave Präsenzsensor (hinter Acrylglas)
+  - id: uart_ld2410
+    tx_pin: GPIO21
+    rx_pin: GPIO18
+    baud_rate: 256000
 
 pn532_i2c:
   id: nfc_reader
@@ -445,6 +469,59 @@ fingerprint_grow:
         lv_anim_del(id(icon_bell),  NULL);
         lv_anim_del(id(icon_grant), NULL);
     - script.execute: timed_deny
+
+# ─────────────────────────────────────────────────────────────────
+# PRÄSENZSENSOR: LD2410 mmWave (GPIO18/21, hinter Acrylglas)
+# ─────────────────────────────────────────────────────────────────
+ld2410:
+  id: ld2410_sensor
+  uart_id: uart_ld2410
+
+binary_sensor:
+  - platform: ld2410
+    has_target:
+      id: presence_at_door
+      name: "Präsenz Eingang"
+      device_class: presence
+      on_press:
+        then:
+          # Idle-Timeout stoppen — Person ist da
+          - script.stop: presence_idle_timeout
+          # Welcome nur zeigen wenn kein wichtiger Zustand aktiv ist
+          # (Klingeln, Processing, Grant, Deny laufen weiter)
+          - if:
+              condition:
+                lambda: |-
+                  return !id(timed_doorbell).is_running() &&
+                         !id(timed_grant).is_running() &&
+                         !id(timed_deny).is_running() &&
+                         !id(timed_processing_watchdog).is_running();
+              then:
+                - light.turn_on: backlight
+                - lvgl.page.show: { id: page_welcome, animation: NONE }
+          - homeassistant.event:
+              event: esphome.presence_detected
+              data: {}
+      on_release:
+        then:
+          # Person weg → Timeout starten, dann Idle
+          - script.execute: presence_idle_timeout
+          - homeassistant.event:
+              event: esphome.presence_cleared
+              data: {}
+    has_moving_target:
+      name: "Bewegung Eingang"
+    has_still_target:
+      name: "Stille Präsenz Eingang"
+
+sensor:
+  - platform: ld2410
+    moving_distance:
+      name: "LD2410 Abstand Bewegung"
+    still_distance:
+      name: "LD2410 Abstand Stillstand"
+    detection_distance:
+      name: "LD2410 Erkennungsabstand"
 
 # ─────────────────────────────────────────────────────────────────
 # DISPLAY & HARDWARE
