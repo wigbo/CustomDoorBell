@@ -594,7 +594,9 @@ font:
       - "\U0000E90D"  # fingerprint    (Verarbeitung)
 
 # ─────────────────────────────────────────────────────────────────
-# LVGL: Display-Seiten & Styles
+# LVGL: Display-Seiten — v5.0 Design
+# Dunkle Karte (290×140) mit Neon-Gradient-Streifen oben
+# Karte zentriert: 15px seitlich, 15px oben/unten in 320×170
 # ─────────────────────────────────────────────────────────────────
 lvgl:
   displays:
@@ -608,24 +610,30 @@ lvgl:
       pad_all: 0
       bg_opa: COVER
       bg_color: 0x000000
-    
+
     - id: card_style
       radius: 12
-      border_width: 2
+      border_width: 0
       bg_opa: COVER
+      bg_color: 0x252538    # dunkel-navy
+      pad_all: 0
+      clip_corner: true
 
   pages:
     # ── IDLE ─────────────────────────────────────────────────────
     - id: page_idle
+      scrollbar_mode: "off"
       bg_color: 0x000000
       widgets:
         - obj:
             width: 100%
             height: 100%
             styles: [base_style]
+            scrollbar_mode: "off"
 
     # ── BOOT ─────────────────────────────────────────────────────
     - id: page_boot
+      scrollbar_mode: "off"
       bg_color: 0x000000
       widgets:
         - obj:
@@ -641,220 +649,304 @@ lvgl:
 
     # ── WILLKOMMEN ────────────────────────────────────────────────
     - id: page_welcome
+      scrollbar_mode: "off"
       bg_color: 0x000000
       widgets:
         - obj:
             width: 100%
             height: 100%
             styles: [base_style]
+            scrollbar_mode: "off"
             widgets:
               - obj:
-                  width: 304
-                  height: 154
+                  width: 290
+                  height: 140
                   align: CENTER
                   styles: [card_style]
-                  bg_color: 0x0A0A0A
-                  border_color: 0x333333
                   widgets:
+                    - obj:
+                        width: 100%
+                        height: 4
+                        align: TOP_LEFT
+                        x: 0
+                        y: 0
+                        bg_color: 0x7E57C2
+                        bg_grad_color: 0x00E5FF
+                        bg_grad_dir: HOR
+                        border_width: 0
+                        radius: 0
+                        pad_all: 0
                     - label:
                         text: "Willkommen bei"
                         text_font: font_large
                         align: CENTER
-                        y: -32
+                        y: -26
                         text_color: 0xAAAAAA
                     - obj:
-                        width: 180
+                        width: 160
                         height: 2
                         align: CENTER
-                        y: 0
-                        bg_color: 0x222222
+                        y: -2
+                        bg_color: 0x1A1A1A
                         styles: [base_style]
                     - label:
                         text: "Familie Tulum"
                         text_font: font_huge_bold
                         align: CENTER
-                        y: 32
+                        y: 22
                         text_color: 0xFFFFFF
 
     # ── KLINGELN ─────────────────────────────────────────────────
     - id: page_ringing
+      scrollbar_mode: "off"
       bg_color: 0x000000
       widgets:
         - obj:
             width: 100%
             height: 100%
             styles: [base_style]
+            scrollbar_mode: "off"
             widgets:
               - obj:
-                  width: 304
-                  height: 154
+                  width: 290
+                  height: 140
                   align: CENTER
                   styles: [card_style]
-                  bg_color: 0x001B2E
-                  border_color: 0x00E5FF
                   widgets:
+                    - obj:
+                        width: 100%
+                        height: 4
+                        align: TOP_LEFT
+                        x: 0
+                        y: 0
+                        bg_color: 0x00E5FF
+                        bg_grad_color: 0x3A7BD5
+                        bg_grad_dir: HOR
+                        border_width: 0
+                        radius: 0
+                        pad_all: 0
                     - label:
                         id: icon_bell
                         text: "\U0000E7F4"
                         text_font: font_icons
                         text_color: 0x00E5FF
                         align: CENTER
-                        y: -22
+                        y: -20
                     - label:
                         text: "Es klingelt"
                         text_font: font_large
                         text_color: 0xFFFFFF
                         align: CENTER
-                        y: 28
+                        y: 24
 
     # ── VERARBEITUNG ──────────────────────────────────────────────
     - id: page_processing
+      scrollbar_mode: "off"
       bg_color: 0x000000
       widgets:
         - obj:
             width: 100%
             height: 100%
             styles: [base_style]
+            scrollbar_mode: "off"
             widgets:
               - obj:
-                  width: 304
-                  height: 154
+                  width: 290
+                  height: 140
                   align: CENTER
                   styles: [card_style]
-                  bg_color: 0x102027
-                  border_color: 0xFFEB3B
                   widgets:
+                    - obj:
+                        width: 100%
+                        height: 4
+                        align: TOP_LEFT
+                        x: 0
+                        y: 0
+                        bg_color: 0xFFEB3B
+                        bg_grad_color: 0xFF9800
+                        bg_grad_dir: HOR
+                        border_width: 0
+                        radius: 0
+                        pad_all: 0
                     - label:
                         id: icon_process
                         text: "\U0000E90D"
                         text_font: font_icons
                         text_color: 0xFFEB3B
                         align: CENTER
-                        y: -22
+                        y: -20
                     - label:
                         text: "Prüfe..."
                         text_font: font_huge_bold
                         text_color: 0xFFFFFF
                         align: CENTER
-                        y: 28
+                        y: 24
 
     # ── ZUTRITT GEWÄHRT ──────────────────────────────────────────
     - id: page_grant
+      scrollbar_mode: "off"
       bg_color: 0x000000
       widgets:
         - obj:
             width: 100%
             height: 100%
             styles: [base_style]
+            scrollbar_mode: "off"
             widgets:
               - obj:
-                  width: 304
-                  height: 154
+                  width: 290
+                  height: 140
                   align: CENTER
                   styles: [card_style]
-                  bg_color: 0x1B5E20
-                  border_color: 0x4CAF50
                   widgets:
+                    - obj:
+                        width: 100%
+                        height: 4
+                        align: TOP_LEFT
+                        x: 0
+                        y: 0
+                        bg_color: 0x00FF87
+                        bg_grad_color: 0x00B8D4
+                        bg_grad_dir: HOR
+                        border_width: 0
+                        radius: 0
+                        pad_all: 0
                     - label:
                         id: icon_grant
                         text: "\U0000EF64"
                         text_font: font_icons
-                        text_color: 0xFFFFFF
+                        text_color: 0x00FF87
                         align: CENTER
-                        y: -22
+                        y: -20
                     - label:
                         text: "Tür geöffnet"
                         text_font: font_huge_bold
                         text_color: 0xFFFFFF
                         align: CENTER
-                        y: 28
+                        y: 24
 
     # ── ZUTRITT VERWEIGERT ───────────────────────────────────────
     - id: page_deny
+      scrollbar_mode: "off"
       bg_color: 0x000000
       widgets:
         - obj:
             width: 100%
             height: 100%
             styles: [base_style]
+            scrollbar_mode: "off"
             widgets:
               - obj:
-                  width: 304
-                  height: 154
+                  width: 290
+                  height: 140
                   align: CENTER
                   styles: [card_style]
-                  bg_color: 0xB71C1C
-                  border_color: 0xFF5252
                   widgets:
+                    - obj:
+                        width: 100%
+                        height: 4
+                        align: TOP_LEFT
+                        x: 0
+                        y: 0
+                        bg_color: 0xFF5252
+                        bg_grad_color: 0xFF1744
+                        bg_grad_dir: HOR
+                        border_width: 0
+                        radius: 0
+                        pad_all: 0
                     - label:
                         id: icon_deny
                         text: "\U0000E5C9"
                         text_font: font_icons
-                        text_color: 0xFFFFFF
+                        text_color: 0xFF5252
                         align: CENTER
-                        y: -22
+                        y: -20
                     - label:
                         text: "STOPP"
                         text_font: font_huge_bold
                         text_color: 0xFFFFFF
                         align: CENTER
-                        y: 28
+                        y: 24
 
     # ── PAKET ─────────────────────────────────────────────────────
     - id: page_package
+      scrollbar_mode: "off"
       bg_color: 0x000000
       widgets:
         - obj:
             width: 100%
             height: 100%
             styles: [base_style]
+            scrollbar_mode: "off"
             widgets:
               - obj:
-                  width: 304
-                  height: 154
+                  width: 290
+                  height: 140
                   align: CENTER
                   styles: [card_style]
-                  bg_color: 0x3E2723
-                  border_color: 0xFFB300
                   widgets:
+                    - obj:
+                        width: 100%
+                        height: 4
+                        align: TOP_LEFT
+                        x: 0
+                        y: 0
+                        bg_color: 0xFFB300
+                        bg_grad_color: 0xFF6D00
+                        bg_grad_dir: HOR
+                        border_width: 0
+                        radius: 0
+                        pad_all: 0
                     - label:
                         id: icon_package
                         text: "\U0000E58F"
                         text_font: font_icons
-                        text_color: 0xFFEB3B
+                        text_color: 0xFFB300
                         align: CENTER
-                        y: -22
+                        y: -20
                     - label:
                         text: "PAKET"
                         text_font: font_huge_bold
                         text_color: 0xFFFFFF
                         align: CENTER
-                        y: 28
+                        y: 24
 
     # ── CUSTOM ───────────────────────────────────────────────────
     - id: page_custom
+      scrollbar_mode: "off"
       bg_color: 0x000000
       widgets:
         - obj:
             width: 100%
             height: 100%
             styles: [base_style]
+            scrollbar_mode: "off"
             widgets:
               - obj:
-                  width: 304
-                  height: 154
+                  width: 290
+                  height: 140
                   align: CENTER
                   styles: [card_style]
-                  bg_color: 0x1A1A2E
-                  border_color: 0x7E57C2
                   widgets:
+                    - obj:
+                        width: 100%
+                        height: 4
+                        align: TOP_LEFT
+                        x: 0
+                        y: 0
+                        bg_color: 0x7E57C2
+                        bg_grad_color: 0x00E5FF
+                        bg_grad_dir: HOR
+                        border_width: 0
+                        radius: 0
+                        pad_all: 0
                     - label:
                         id: lbl_custom_icon
                         text: "\U0000E887"
                         text_font: font_icons
                         text_color: 0xFFFFFF
                         align: CENTER
-                        y: -30
+                        y: -26
                     - label:
                         id: lbl_custom_text
                         text: "..."
@@ -862,42 +954,54 @@ lvgl:
                         text_color: 0xFFFFFF
                         text_align: CENTER
                         align: CENTER
-                        y: 25
+                        y: 22
                         long_mode: WRAP
-                        width: 280
+                        width: 270
 
     # ── FEHLER / TIMEOUT ─────────────────────────────────────────
     - id: page_error
+      scrollbar_mode: "off"
       bg_color: 0x000000
       widgets:
         - obj:
             width: 100%
             height: 100%
             styles: [base_style]
+            scrollbar_mode: "off"
             widgets:
               - obj:
-                  width: 304
-                  height: 154
+                  width: 290
+                  height: 140
                   align: CENTER
                   styles: [card_style]
-                  bg_color: 0x1A0800
-                  border_color: 0xFF6D00
                   widgets:
+                    - obj:
+                        width: 100%
+                        height: 4
+                        align: TOP_LEFT
+                        x: 0
+                        y: 0
+                        bg_color: 0xFF6D00
+                        bg_grad_color: 0xD50000
+                        bg_grad_dir: HOR
+                        border_width: 0
+                        radius: 0
+                        pad_all: 0
                     - label:
                         text: "\U0000E002"
                         text_font: font_icons
                         text_color: 0xFF6D00
                         align: CENTER
-                        y: -28
+                        y: -24
                     - label:
                         text: "Verbindung Timeout"
                         text_font: font_medium
                         text_color: 0xFFFFFF
                         align: CENTER
-                        y: 20
+                        y: 16
                     - label:
                         text: "Bitte erneut versuchen"
                         text_font: font_medium
                         text_color: 0x888888
                         align: CENTER
-                        y: 44
+                        y: 38
