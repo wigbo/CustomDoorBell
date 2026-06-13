@@ -623,15 +623,15 @@ font:
 
 # ─────────────────────────────────────────────────────────────────
 # LVGL: Display-Seiten — v5.0 Design
-# Dunkle Karte (290×160) mit Neon-Gradient-Streifen oben
-# Karte zentriert: 15px seitlich, 40px oben/unten in 320×240
+# Karte 220×280: passt in 240px Breite (10px Rand je Seite)
+#                nutzt 320px Höhe (20px Rand oben/unten)
 # Farben BGR-korrigiert für ILI9341 auf dem CYD
 # ─────────────────────────────────────────────────────────────────
 lvgl:
   displays:
     - main_display
   rotation: 90
-  buffer_size: 10%
+  buffer_size: 25%
 
   style_definitions:
     - id: base_style
@@ -691,8 +691,8 @@ lvgl:
             scrollbar_mode: "off"
             widgets:
               - obj:
-                  width: 290
-                  height: 160
+                  width: 220
+                  height: 280
                   align: CENTER
                   styles: [card_style]
                   widgets:
@@ -712,20 +712,20 @@ lvgl:
                         text: "Willkommen bei"
                         text_font: font_large
                         align: CENTER
-                        y: -30
+                        y: -60
                         text_color: 0xAAAAAA
                     - obj:
                         width: 160
                         height: 2
                         align: CENTER
-                        y: -2
+                        y: 0
                         bg_color: 0x1A1A1A
                         styles: [base_style]
                     - label:
                         text: "Familie Tulum"
                         text_font: font_huge_bold
                         align: CENTER
-                        y: 26
+                        y: 55
                         text_color: 0xFFFFFF
 
     # ── KLINGELN ─────────────────────────────────────────────────
@@ -740,8 +740,8 @@ lvgl:
             scrollbar_mode: "off"
             widgets:
               - obj:
-                  width: 290
-                  height: 160
+                  width: 220
+                  height: 280
                   align: CENTER
                   styles: [card_style]
                   widgets:
@@ -763,13 +763,13 @@ lvgl:
                         text_font: font_icons
                         text_color: 0xFFE500
                         align: CENTER
-                        y: -22
+                        y: -50
                     - label:
                         text: "Es klingelt"
                         text_font: font_large
                         text_color: 0xFFFFFF
                         align: CENTER
-                        y: 28
+                        y: 55
 
     # ── VERARBEITUNG ──────────────────────────────────────────────
     - id: page_processing
@@ -783,8 +783,8 @@ lvgl:
             scrollbar_mode: "off"
             widgets:
               - obj:
-                  width: 290
-                  height: 160
+                  width: 220
+                  height: 280
                   align: CENTER
                   styles: [card_style]
                   widgets:
@@ -806,13 +806,13 @@ lvgl:
                         text_font: font_icons
                         text_color: 0x3BEBFF
                         align: CENTER
-                        y: -22
+                        y: -50
                     - label:
                         text: "Prüfe..."
                         text_font: font_huge_bold
                         text_color: 0xFFFFFF
                         align: CENTER
-                        y: 28
+                        y: 55
 
     # ── ZUTRITT GEWÄHRT ──────────────────────────────────────────
     - id: page_grant
@@ -826,8 +826,8 @@ lvgl:
             scrollbar_mode: "off"
             widgets:
               - obj:
-                  width: 290
-                  height: 160
+                  width: 220
+                  height: 280
                   align: CENTER
                   styles: [card_style]
                   widgets:
@@ -849,13 +849,13 @@ lvgl:
                         text_font: font_icons
                         text_color: 0x87FF00
                         align: CENTER
-                        y: -22
+                        y: -50
                     - label:
                         text: "Tür geöffnet"
-                        text_font: font_huge_bold
+                        text_font: font_large
                         text_color: 0xFFFFFF
                         align: CENTER
-                        y: 28
+                        y: 55
 
     # ── ZUTRITT VERWEIGERT ───────────────────────────────────────
     - id: page_deny
@@ -870,8 +870,8 @@ lvgl:
             widgets:
               - obj:
                   id: card_deny
-                  width: 290
-                  height: 160
+                  width: 220
+                  height: 280
                   align: CENTER
                   styles: [card_style]
                   widgets:
@@ -893,13 +893,13 @@ lvgl:
                         text_font: font_icons
                         text_color: 0x5252FF
                         align: CENTER
-                        y: -22
+                        y: -50
                     - label:
                         text: "STOPP"
                         text_font: font_huge_bold
                         text_color: 0xFFFFFF
                         align: CENTER
-                        y: 28
+                        y: 55
 
     # ── PAKET ─────────────────────────────────────────────────────
     - id: page_package
@@ -913,8 +913,8 @@ lvgl:
             scrollbar_mode: "off"
             widgets:
               - obj:
-                  width: 290
-                  height: 160
+                  width: 220
+                  height: 280
                   align: CENTER
                   styles: [card_style]
                   widgets:
@@ -936,13 +936,13 @@ lvgl:
                         text_font: font_icons
                         text_color: 0x00B3FF
                         align: CENTER
-                        y: -22
+                        y: -50
                     - label:
                         text: "PAKET"
                         text_font: font_huge_bold
                         text_color: 0xFFFFFF
                         align: CENTER
-                        y: 28
+                        y: 55
 
     # ── CUSTOM ───────────────────────────────────────────────────
     - id: page_custom
@@ -956,8 +956,8 @@ lvgl:
             scrollbar_mode: "off"
             widgets:
               - obj:
-                  width: 290
-                  height: 160
+                  width: 220
+                  height: 280
                   align: CENTER
                   styles: [card_style]
                   widgets:
@@ -979,7 +979,7 @@ lvgl:
                         text_font: font_icons
                         text_color: 0xFFFFFF
                         align: CENTER
-                        y: -28
+                        y: -55
                     - label:
                         id: lbl_custom_text
                         text: "..."
@@ -987,9 +987,9 @@ lvgl:
                         text_color: 0xFFFFFF
                         text_align: CENTER
                         align: CENTER
-                        y: 26
+                        y: 55
                         long_mode: WRAP
-                        width: 270
+                        width: 200
 
     # ── FEHLER / TIMEOUT ─────────────────────────────────────────
     - id: page_error
@@ -1003,8 +1003,8 @@ lvgl:
             scrollbar_mode: "off"
             widgets:
               - obj:
-                  width: 290
-                  height: 160
+                  width: 220
+                  height: 280
                   align: CENTER
                   styles: [card_style]
                   widgets:
@@ -1025,17 +1025,23 @@ lvgl:
                         text_font: font_icons
                         text_color: 0x006DFF
                         align: CENTER
-                        y: -26
+                        y: -55
                     - label:
                         text: "Verbindung Timeout"
                         text_font: font_medium
                         text_color: 0xFFFFFF
+                        text_align: CENTER
                         align: CENTER
-                        y: 18
+                        y: 30
+                        long_mode: WRAP
+                        width: 200
                     - label:
                         text: "Bitte erneut versuchen"
                         text_font: font_medium
                         text_color: 0x888888
+                        text_align: CENTER
                         align: CENTER
-                        y: 42
+                        y: 65
+                        long_mode: WRAP
+                        width: 200
 
