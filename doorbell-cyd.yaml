@@ -556,6 +556,7 @@ script:
 # ─────────────────────────────────────────────────────────────────
 # DISPLAY: ILI9341 320×240 (CYD)
 # CLK=GPIO14  MOSI=GPIO13  CS=GPIO15  DC=GPIO2  BLK=GPIO21
+# swap_xy: true → LVGL bekommt korrekte 320×240 Auflösung
 # ─────────────────────────────────────────────────────────────────
 output:
   - platform: gpio
@@ -581,6 +582,8 @@ display:
     cs_pin: GPIO15
     dc_pin: GPIO2
     invert_colors: false
+    transform:
+      swap_xy: true
     update_interval: never
     auto_clear_enabled: false
 
@@ -623,8 +626,8 @@ font:
 
 # ─────────────────────────────────────────────────────────────────
 # LVGL: Display-Seiten — v5.0 Design
-# Portrait 240×320 (kein rotation — ILI9341 Hardware-Rotation nicht aktiv)
-# Karte 220×300: 10px Rand links/rechts, 10px Rand oben/unten
+# Landscape 320×240 (swap_xy: true im display-Block)
+# Karte 290×200: 15px Rand links/rechts, 20px Rand oben/unten
 # Farben BGR-korrigiert für ILI9341 auf dem CYD
 # ─────────────────────────────────────────────────────────────────
 lvgl:
@@ -690,8 +693,8 @@ lvgl:
             scrollbar_mode: "off"
             widgets:
               - obj:
-                  width: 220
-                  height: 300
+                  width: 290
+                  height: 200
                   align: CENTER
                   styles: [card_style]
                   widgets:
@@ -709,28 +712,22 @@ lvgl:
                         pad_all: 0
                     - label:
                         text: "Willkommen bei"
-                        text_font: font_medium
+                        text_font: font_large
                         align: CENTER
-                        y: -70
+                        y: -40
                         text_color: 0xAAAAAA
                     - obj:
                         width: 160
                         height: 2
                         align: CENTER
-                        y: -10
+                        y: -8
                         bg_color: 0x1A1A1A
                         styles: [base_style]
                     - label:
-                        text: "Familie"
+                        text: "Familie Tulum"
                         text_font: font_huge_bold
                         align: CENTER
-                        y: 40
-                        text_color: 0xFFFFFF
-                    - label:
-                        text: "Tulum"
-                        text_font: font_huge_bold
-                        align: CENTER
-                        y: 90
+                        y: 20
                         text_color: 0xFFFFFF
 
     # ── KLINGELN ─────────────────────────────────────────────────
@@ -745,8 +742,8 @@ lvgl:
             scrollbar_mode: "off"
             widgets:
               - obj:
-                  width: 220
-                  height: 300
+                  width: 290
+                  height: 200
                   align: CENTER
                   styles: [card_style]
                   widgets:
@@ -768,13 +765,13 @@ lvgl:
                         text_font: font_icons
                         text_color: 0xFFE500
                         align: CENTER
-                        y: -60
+                        y: -30
                     - label:
                         text: "Es klingelt"
                         text_font: font_large
                         text_color: 0xFFFFFF
                         align: CENTER
-                        y: 60
+                        y: 35
 
     # ── VERARBEITUNG ──────────────────────────────────────────────
     - id: page_processing
@@ -788,8 +785,8 @@ lvgl:
             scrollbar_mode: "off"
             widgets:
               - obj:
-                  width: 220
-                  height: 300
+                  width: 290
+                  height: 200
                   align: CENTER
                   styles: [card_style]
                   widgets:
@@ -811,13 +808,13 @@ lvgl:
                         text_font: font_icons
                         text_color: 0x3BEBFF
                         align: CENTER
-                        y: -60
+                        y: -30
                     - label:
                         text: "Prüfe..."
                         text_font: font_huge_bold
                         text_color: 0xFFFFFF
                         align: CENTER
-                        y: 60
+                        y: 35
 
     # ── ZUTRITT GEWÄHRT ──────────────────────────────────────────
     - id: page_grant
@@ -831,8 +828,8 @@ lvgl:
             scrollbar_mode: "off"
             widgets:
               - obj:
-                  width: 220
-                  height: 300
+                  width: 290
+                  height: 200
                   align: CENTER
                   styles: [card_style]
                   widgets:
@@ -854,13 +851,13 @@ lvgl:
                         text_font: font_icons
                         text_color: 0x87FF00
                         align: CENTER
-                        y: -60
+                        y: -30
                     - label:
                         text: "Tür geöffnet"
                         text_font: font_large
                         text_color: 0xFFFFFF
                         align: CENTER
-                        y: 60
+                        y: 35
 
     # ── ZUTRITT VERWEIGERT ───────────────────────────────────────
     - id: page_deny
@@ -875,8 +872,8 @@ lvgl:
             widgets:
               - obj:
                   id: card_deny
-                  width: 220
-                  height: 300
+                  width: 290
+                  height: 200
                   align: CENTER
                   styles: [card_style]
                   widgets:
@@ -898,13 +895,13 @@ lvgl:
                         text_font: font_icons
                         text_color: 0x5252FF
                         align: CENTER
-                        y: -60
+                        y: -30
                     - label:
                         text: "STOPP"
                         text_font: font_huge_bold
                         text_color: 0xFFFFFF
                         align: CENTER
-                        y: 60
+                        y: 35
 
     # ── PAKET ─────────────────────────────────────────────────────
     - id: page_package
@@ -918,8 +915,8 @@ lvgl:
             scrollbar_mode: "off"
             widgets:
               - obj:
-                  width: 220
-                  height: 300
+                  width: 290
+                  height: 200
                   align: CENTER
                   styles: [card_style]
                   widgets:
@@ -941,13 +938,13 @@ lvgl:
                         text_font: font_icons
                         text_color: 0x00B3FF
                         align: CENTER
-                        y: -60
+                        y: -30
                     - label:
                         text: "PAKET"
                         text_font: font_huge_bold
                         text_color: 0xFFFFFF
                         align: CENTER
-                        y: 60
+                        y: 35
 
     # ── CUSTOM ───────────────────────────────────────────────────
     - id: page_custom
@@ -961,8 +958,8 @@ lvgl:
             scrollbar_mode: "off"
             widgets:
               - obj:
-                  width: 220
-                  height: 300
+                  width: 290
+                  height: 200
                   align: CENTER
                   styles: [card_style]
                   widgets:
@@ -984,7 +981,7 @@ lvgl:
                         text_font: font_icons
                         text_color: 0xFFFFFF
                         align: CENTER
-                        y: -65
+                        y: -30
                     - label:
                         id: lbl_custom_text
                         text: "..."
@@ -992,9 +989,9 @@ lvgl:
                         text_color: 0xFFFFFF
                         text_align: CENTER
                         align: CENTER
-                        y: 60
+                        y: 35
                         long_mode: WRAP
-                        width: 200
+                        width: 270
 
     # ── FEHLER / TIMEOUT ─────────────────────────────────────────
     - id: page_error
@@ -1008,8 +1005,8 @@ lvgl:
             scrollbar_mode: "off"
             widgets:
               - obj:
-                  width: 220
-                  height: 300
+                  width: 290
+                  height: 200
                   align: CENTER
                   styles: [card_style]
                   widgets:
@@ -1030,23 +1027,22 @@ lvgl:
                         text_font: font_icons
                         text_color: 0x006DFF
                         align: CENTER
-                        y: -65
+                        y: -30
                     - label:
                         text: "Verbindung Timeout"
                         text_font: font_medium
                         text_color: 0xFFFFFF
                         text_align: CENTER
                         align: CENTER
-                        y: 30
+                        y: 20
                         long_mode: WRAP
-                        width: 200
+                        width: 270
                     - label:
                         text: "Bitte erneut versuchen"
                         text_font: font_medium
                         text_color: 0x888888
                         text_align: CENTER
                         align: CENTER
-                        y: 70
+                        y: 48
                         long_mode: WRAP
-                        width: 200
-
+                        width: 270
