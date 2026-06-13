@@ -9,7 +9,7 @@ esphome:
   name_add_mac_suffix: false
   project:
     name: "custom.doorbell"
-    version: "4.2"
+    version: "4.3"
 
   on_boot:
     priority: -100
@@ -31,6 +31,14 @@ esp32:
 psram:
   mode: octal
   speed: 80MHz
+
+# ─────────────────────────────────────────────────────────────────
+# GLOBALS (Für dynamischen Custom Timeout)
+# ─────────────────────────────────────────────────────────────────
+globals:
+  - id: custom_timeout_s
+    type: int
+    initial_value: '10'
 
 # ─────────────────────────────────────────────────────────────────
 # NETZWERK: W5500 Ethernet
@@ -64,14 +72,17 @@ api:
         - script.stop: timed_doorbell
         - script.stop: timed_grant
         - script.stop: timed_deny
+        - script.stop: timed_custom
         - script.stop: timed_processing_watchdog
         - lambda: |-
             lv_anim_del(id(icon_bell),  NULL);
             lv_anim_del(id(icon_grant), NULL);
             lv_anim_del(id(icon_deny),  NULL);
+            lv_anim_del(id(card_deny),  NULL);
             lv_anim_del(id(icon_process), NULL);
             lv_anim_del(id(icon_package), NULL);
             lv_anim_del(id(lbl_custom_icon), NULL);
+            lv_obj_set_style_bg_color(id(card_deny), lv_color_hex(0x252538), 0);
         - lvgl.page.show: { id: page_idle, animation: NONE }
         - light.turn_off: backlight
 
@@ -80,14 +91,17 @@ api:
         - script.stop: timed_doorbell
         - script.stop: timed_grant
         - script.stop: timed_deny
+        - script.stop: timed_custom
         - script.stop: timed_processing_watchdog
         - lambda: |-
             lv_anim_del(id(icon_bell),  NULL);
             lv_anim_del(id(icon_grant), NULL);
             lv_anim_del(id(icon_deny),  NULL);
+            lv_anim_del(id(card_deny),  NULL);
             lv_anim_del(id(icon_process), NULL);
             lv_anim_del(id(icon_package), NULL);
             lv_anim_del(id(lbl_custom_icon), NULL);
+            lv_obj_set_style_bg_color(id(card_deny), lv_color_hex(0x252538), 0);
         - light.turn_on: backlight
         - lvgl.page.show: { id: page_welcome, animation: NONE }
 
@@ -95,13 +109,16 @@ api:
       then:
         - script.stop: timed_grant
         - script.stop: timed_deny
+        - script.stop: timed_custom
         - script.stop: timed_processing_watchdog
         - lambda: |-
             lv_anim_del(id(icon_grant), NULL);
             lv_anim_del(id(icon_deny),  NULL);
+            lv_anim_del(id(card_deny),  NULL);
             lv_anim_del(id(icon_process), NULL);
             lv_anim_del(id(icon_package), NULL);
             lv_anim_del(id(lbl_custom_icon), NULL);
+            lv_obj_set_style_bg_color(id(card_deny), lv_color_hex(0x252538), 0);
         - light.turn_on: backlight
         - script.execute: timed_doorbell
 
@@ -110,13 +127,16 @@ api:
         - script.stop: timed_doorbell
         - script.stop: timed_grant
         - script.stop: timed_deny
+        - script.stop: timed_custom
         - script.stop: timed_processing_watchdog
         - lambda: |-
             lv_anim_del(id(icon_bell),  NULL);
             lv_anim_del(id(icon_grant), NULL);
             lv_anim_del(id(icon_deny),  NULL);
+            lv_anim_del(id(card_deny),  NULL);
             lv_anim_del(id(icon_package), NULL);
             lv_anim_del(id(lbl_custom_icon), NULL);
+            lv_obj_set_style_bg_color(id(card_deny), lv_color_hex(0x252538), 0);
         - light.turn_on: backlight
         - lvgl.page.show: { id: page_processing, animation: NONE }
         - lambda: |-
@@ -141,13 +161,16 @@ api:
       then:
         - script.stop: timed_doorbell
         - script.stop: timed_deny
+        - script.stop: timed_custom
         - script.stop: timed_processing_watchdog
         - lambda: |-
             lv_anim_del(id(icon_bell), NULL);
             lv_anim_del(id(icon_deny), NULL);
+            lv_anim_del(id(card_deny), NULL);
             lv_anim_del(id(icon_process), NULL);
             lv_anim_del(id(icon_package), NULL);
             lv_anim_del(id(lbl_custom_icon), NULL);
+            lv_obj_set_style_bg_color(id(card_deny), lv_color_hex(0x252538), 0);
         - light.turn_on: backlight
         - script.execute: timed_grant
 
@@ -155,6 +178,7 @@ api:
       then:
         - script.stop: timed_doorbell
         - script.stop: timed_grant
+        - script.stop: timed_custom
         - script.stop: timed_processing_watchdog
         - lambda: |-
             lv_anim_del(id(icon_bell),  NULL);
@@ -170,13 +194,16 @@ api:
         - script.stop: timed_doorbell
         - script.stop: timed_grant
         - script.stop: timed_deny
+        - script.stop: timed_custom
         - script.stop: timed_processing_watchdog
         - lambda: |-
             lv_anim_del(id(icon_bell),  NULL);
             lv_anim_del(id(icon_grant), NULL);
             lv_anim_del(id(icon_deny),  NULL);
+            lv_anim_del(id(card_deny),  NULL);
             lv_anim_del(id(icon_process), NULL);
             lv_anim_del(id(lbl_custom_icon), NULL);
+            lv_obj_set_style_bg_color(id(card_deny), lv_color_hex(0x252538), 0);
         - light.turn_on: backlight
         - lvgl.page.show: { id: page_package, animation: NONE }
         # Pop-In Animation (Overshoot)
@@ -200,18 +227,25 @@ api:
       variables:
         message: string
         icon: string
+        duration: int
       then:
         - script.stop: timed_doorbell
         - script.stop: timed_grant
         - script.stop: timed_deny
+        - script.stop: timed_custom
         - script.stop: timed_processing_watchdog
+        - globals.set:
+            id: custom_timeout_s
+            value: !lambda "return duration;"
         - lambda: |-
             lv_anim_del(id(icon_bell),  NULL);
             lv_anim_del(id(icon_grant), NULL);
             lv_anim_del(id(icon_deny),  NULL);
+            lv_anim_del(id(card_deny),  NULL);
             lv_anim_del(id(icon_process), NULL);
             lv_anim_del(id(icon_package), NULL);
-            const char* icon_str = "\U0000E887"; 
+            lv_obj_set_style_bg_color(id(card_deny), lv_color_hex(0x252538), 0);
+            const char* icon_str = "\U0000E887";
             if      (icon == "warnung") icon_str = "\U0000E002";
             else if (icon == "herz")    icon_str = "\U0000E87D";
             else if (icon == "haus")    icon_str = "\U0000E88A";
@@ -219,23 +253,7 @@ api:
             lv_label_set_text(id(lbl_custom_icon), icon_str);
             lv_label_set_text(id(lbl_custom_text), message.c_str());
         - light.turn_on: backlight
-        - lvgl.page.show: { id: page_custom, animation: NONE }
-        # Pop-In Animation für das Custom Icon
-        - lambda: |-
-            lv_obj_t *obj = id(lbl_custom_icon);
-            lv_anim_del(obj, NULL);
-            lv_obj_set_style_transform_pivot_x(obj, LV_PCT(50), 0);
-            lv_obj_set_style_transform_pivot_y(obj, LV_PCT(50), 0);
-            lv_anim_t a; lv_anim_init(&a);
-            lv_anim_set_var(&a, obj);
-            lv_anim_set_values(&a, 10, 256);
-            lv_anim_set_time(&a, 600);
-            lv_anim_set_path_cb(&a, lv_anim_path_overshoot);
-            lv_anim_set_exec_cb(&a, [](void *obj, int32_t val) {
-                lv_obj_set_style_transform_zoom((lv_obj_t *)obj, val, 0);
-                lv_obj_invalidate((lv_obj_t *)obj);
-            });
-            lv_anim_start(&a);
+        - script.execute: timed_custom
 
     - service: run_demo
       then:
@@ -305,29 +323,74 @@ script:
       - lvgl.page.show: { id: page_deny, animation: NONE }
       - delay: 100ms
       - lambda: |-
+          // Icon Shake
           lv_obj_t *obj = id(icon_deny);
           lv_anim_del(obj, NULL);
-          lv_obj_set_style_translate_x(obj, 0, 0); // Reset position
+          lv_obj_set_style_translate_x(obj, 0, 0);
           lv_anim_t a; lv_anim_init(&a);
           lv_anim_set_var(&a, obj);
-          lv_anim_set_values(&a, -15, 15); // Shake amplitude
-          lv_anim_set_time(&a, 60);        // Speed of shake
+          lv_anim_set_values(&a, -15, 15);
+          lv_anim_set_time(&a, 60);
           lv_anim_set_reverse_time(&a, 60);
-          lv_anim_set_repeat_count(&a, 8); // Number of shakes
+          lv_anim_set_repeat_count(&a, 8);
           lv_anim_set_exec_cb(&a, [](void *obj, int32_t val) {
               lv_obj_set_style_translate_x((lv_obj_t *)obj, val, 0);
               lv_obj_invalidate((lv_obj_t *)obj);
           });
-          // Ensure it resets to center when animation ends
           lv_anim_set_ready_cb(&a, [](lv_anim_t *a) {
               lv_obj_set_style_translate_x((lv_obj_t *)a->var, 0, 0);
               lv_obj_invalidate((lv_obj_t *)a->var);
           });
           lv_anim_start(&a);
+
+          // Card background flash
+          lv_obj_t *card = id(card_deny);
+          lv_anim_del(card, NULL);
+          lv_anim_t a2; lv_anim_init(&a2);
+          lv_anim_set_var(&a2, card);
+          lv_anim_set_values(&a2, 0, 255);
+          lv_anim_set_time(&a2, 250);
+          lv_anim_set_reverse_time(&a2, 250);
+          lv_anim_set_repeat_count(&a2, LV_ANIM_REPEAT_INFINITE);
+          lv_anim_set_exec_cb(&a2, [](void *obj, int32_t val) {
+              lv_color_t c = lv_color_mix(lv_color_hex(0xFF1744), lv_color_hex(0x252538), val);
+              lv_obj_set_style_bg_color((lv_obj_t *)obj, c, 0);
+              lv_obj_invalidate((lv_obj_t *)obj);
+          });
+          lv_anim_start(&a2);
       - delay: 5s
       - lambda: |-
           lv_anim_del(id(icon_deny), NULL);
+          lv_anim_del(id(card_deny), NULL);
           lv_obj_set_style_translate_x(id(icon_deny), 0, 0);
+          lv_obj_set_style_bg_color(id(card_deny), lv_color_hex(0x252538), 0);
+      - lvgl.page.show: { id: page_welcome, animation: FADE_IN }
+
+  - id: timed_custom
+    mode: restart
+    then:
+      - lvgl.page.show: { id: page_custom, animation: NONE }
+      - delay: 100ms
+      - lambda: |-
+          lv_obj_t *obj = id(lbl_custom_icon);
+          lv_anim_del(obj, NULL);
+          lv_obj_set_style_transform_pivot_x(obj, LV_PCT(50), 0);
+          lv_obj_set_style_transform_pivot_y(obj, LV_PCT(50), 0);
+          lv_anim_t a; lv_anim_init(&a);
+          lv_anim_set_var(&a, obj);
+          lv_anim_set_values(&a, 256, 320);
+          lv_anim_set_time(&a, 800);
+          lv_anim_set_reverse_time(&a, 800);
+          lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
+          lv_anim_set_exec_cb(&a, [](void *obj, int32_t val) {
+              lv_obj_set_style_transform_zoom((lv_obj_t *)obj, val, 0);
+              lv_obj_invalidate((lv_obj_t *)obj);
+          });
+          lv_anim_start(&a);
+      - delay: !lambda "return id(custom_timeout_s) * 1000;"
+      - lambda: |-
+          lv_anim_del(id(lbl_custom_icon), NULL);
+          lv_obj_set_style_transform_zoom(id(lbl_custom_icon), 256, 0);
       - lvgl.page.show: { id: page_welcome, animation: FADE_IN }
 
   # Watchdog für den Processing-Zustand.
@@ -389,6 +452,7 @@ script:
           data:
             icon: "muell"
             message: "Müll raus!"
+            duration: 4
       - delay: 4s
       - homeassistant.service:
           service: esphome.doorbell_set_idle
@@ -432,12 +496,15 @@ fingerprint_grow:
     - script.stop: timed_doorbell
     - script.stop: timed_grant
     - script.stop: timed_deny
+    - script.stop: timed_custom
     - lambda: |-
         lv_anim_del(id(icon_bell),  NULL);
         lv_anim_del(id(icon_grant), NULL);
         lv_anim_del(id(icon_deny),  NULL);
+        lv_anim_del(id(card_deny),  NULL);
         lv_anim_del(id(icon_package), NULL);
         lv_anim_del(id(lbl_custom_icon), NULL);
+        lv_obj_set_style_bg_color(id(card_deny), lv_color_hex(0x252538), 0);
     - lvgl.page.show: { id: page_processing, animation: NONE }
     - light.turn_on: backlight
     - lambda: |-
@@ -465,10 +532,12 @@ fingerprint_grow:
   on_finger_scan_unmatched:
     - script.stop: timed_doorbell
     - script.stop: timed_grant
+    - script.stop: timed_custom
     - script.stop: timed_processing_watchdog
     - lambda: |-
         lv_anim_del(id(icon_bell),  NULL);
         lv_anim_del(id(icon_grant), NULL);
+        lv_anim_del(id(lbl_custom_icon), NULL);
     - script.execute: timed_deny
 
 # ─────────────────────────────────────────────────────────────────
@@ -841,6 +910,7 @@ lvgl:
             scrollbar_mode: "off"
             widgets:
               - obj:
+                  id: card_deny
                   width: 290
                   height: 140
                   align: CENTER

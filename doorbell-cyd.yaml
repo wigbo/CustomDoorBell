@@ -147,7 +147,7 @@ api:
             lv_anim_set_time(&a, 2000);
             lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
             lv_anim_set_exec_cb(&a, [](void *obj, int32_t val) {
-                lv_obj_set_style_transform_angle((lv_obj_t *)obj, val, 0);
+                lv_obj_set_style_transform_rotation((lv_obj_t *)obj, val, 0);
                 lv_obj_invalidate((lv_obj_t *)obj);
             });
             lv_anim_start(&a);
@@ -467,9 +467,11 @@ display:
   - platform: st7789v
     id: main_display
     spi_id: spi_display
-    model: CUSTOM        # Auf CUSTOM geändert
-    width: 170           # Physische Breite
-    height: 320          # Physische Höhe
+    model: CUSTOM
+    width: 170
+    height: 320
+    offset_width: 35
+    offset_height: 0
     cs_pin: GPIO37
     dc_pin: GPIO39
     reset_pin: GPIO40
@@ -483,12 +485,21 @@ font:
   - file: "gfonts://Montserrat@700"
     id: font_huge_bold
     size: 40
+    extras:
+      - file: "gfonts://Montserrat@700"
+        glyphs: "äöüÄÖÜß"
   - file: "gfonts://Montserrat"
     id: font_large
     size: 26
+    extras:
+      - file: "gfonts://Montserrat"
+        glyphs: "äöüÄÖÜß"
   - file: "gfonts://Montserrat"
     id: font_medium
     size: 20
+    extras:
+      - file: "gfonts://Montserrat"
+        glyphs: "äöüÄÖÜß"
   - file: "gfonts://Material Icons"
     id: font_icons
     size: 55
@@ -510,6 +521,7 @@ font:
 lvgl:
   displays:
     - main_display
+  rotation: 90
   buffer_size: 25%
 
   style_definitions:
