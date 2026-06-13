@@ -556,7 +556,7 @@ script:
 # ─────────────────────────────────────────────────────────────────
 # DISPLAY: ILI9341 320×240 (CYD)
 # CLK=GPIO14  MOSI=GPIO13  CS=GPIO15  DC=GPIO2  BLK=GPIO21
-# Landscape 320×240 via transform: swap_xy + dimensions (siehe unten)
+# Display nativ 240×320 — Landscape via lvgl rotation: 270 (siehe unten)
 # ─────────────────────────────────────────────────────────────────
 output:
   - platform: gpio
@@ -582,15 +582,6 @@ display:
     cs_pin: GPIO15
     dc_pin: GPIO2
     invert_colors: false
-    # swap_xy verlangt laut ESPHome-Doku zwingend dimensions mit der
-    # FINALEN Auflösung nach der Rotation (320×240 Landscape).
-    # Ohne dimensions meldet der Treiber weiter 240×320 an LVGL →
-    # LVGL rendert Portrait → Pixel-Swap → Bild erscheint 90° gedreht.
-    dimensions:
-      width: 320
-      height: 240
-    transform:
-      swap_xy: true
     update_interval: never
     auto_clear_enabled: false
 
@@ -633,13 +624,14 @@ font:
 
 # ─────────────────────────────────────────────────────────────────
 # LVGL: Display-Seiten — v5.0 Design
-# Landscape 320×240 (display: swap_xy + dimensions 320×240)
+# Landscape 320×240 (lvgl rotation: 270, Display nativ)
 # Karte 290×200: 15px Rand links/rechts, 20px Rand oben/unten
 # Farben BGR-korrigiert für ILI9341 auf dem CYD
 # ─────────────────────────────────────────────────────────────────
 lvgl:
   displays:
     - main_display
+  rotation: 270        # Landscape 320×240 (Software-Rotation; 90 war die falsche Landscape-Lage)
   buffer_size: 25%
 
   style_definitions:
