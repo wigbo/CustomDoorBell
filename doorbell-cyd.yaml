@@ -556,7 +556,7 @@ script:
 # ─────────────────────────────────────────────────────────────────
 # DISPLAY: ILI9341 320×240 (CYD)
 # CLK=GPIO14  MOSI=GPIO13  CS=GPIO15  DC=GPIO2  BLK=GPIO21
-# swap_xy: true → LVGL bekommt korrekte 320×240 Auflösung
+# LVGL rotation: 90 → Landscape 320×240 (Software-Rotation via LVGL)
 # ─────────────────────────────────────────────────────────────────
 output:
   - platform: gpio
@@ -582,9 +582,6 @@ display:
     cs_pin: GPIO15
     dc_pin: GPIO2
     invert_colors: false
-    transform:
-      swap_xy: true
-      mirror_x: true
     update_interval: never
     auto_clear_enabled: false
 
@@ -627,13 +624,14 @@ font:
 
 # ─────────────────────────────────────────────────────────────────
 # LVGL: Display-Seiten — v5.0 Design
-# Landscape 320×240 (swap_xy: true im display-Block)
+# Landscape 320×240 (rotation: 90 im lvgl-Block, wie Production)
 # Karte 290×200: 15px Rand links/rechts, 20px Rand oben/unten
 # Farben BGR-korrigiert für ILI9341 auf dem CYD
 # ─────────────────────────────────────────────────────────────────
 lvgl:
   displays:
     - main_display
+  rotation: 90
   buffer_size: 25%
 
   style_definitions:
