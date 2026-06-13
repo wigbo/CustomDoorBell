@@ -556,7 +556,7 @@ script:
 # ─────────────────────────────────────────────────────────────────
 # DISPLAY: ILI9341 320×240 (CYD)
 # CLK=GPIO14  MOSI=GPIO13  CS=GPIO15  DC=GPIO2  BLK=GPIO21
-# Display nativ 240×320 — Landscape via lvgl rotation: 270 (siehe unten)
+# Display nativ + mipi_spi-Treiber → korrekte Landscape 320×240
 # ─────────────────────────────────────────────────────────────────
 output:
   - platform: gpio
@@ -571,17 +571,26 @@ light:
     restore_mode: ALWAYS_ON
 
 spi:
-  clk_pin: GPIO14
-  mosi_pin: GPIO13
-  miso_pin: GPIO12
+  - id: lcd
+    clk_pin: GPIO14
+    mosi_pin: GPIO13
+    miso_pin: GPIO12
 
 display:
-  - platform: ili9xxx
+  - platform: mipi_spi
     id: main_display
+    spi_id: lcd
     model: ILI9341
     cs_pin: GPIO15
     dc_pin: GPIO2
     invert_colors: false
+    dimensions:
+      width: 320
+      height: 240
+    transform:
+      swap_xy: true
+      mirror_x: false
+      mirror_y: false
     update_interval: never
     auto_clear_enabled: false
 
@@ -624,14 +633,13 @@ font:
 
 # ─────────────────────────────────────────────────────────────────
 # LVGL: Display-Seiten — v5.0 Design
-# Landscape 320×240 (lvgl rotation: 270, Display nativ)
+# Landscape 320×240 (mipi_spi + dimensions 320×240 + swap_xy)
 # Karte 290×200: 15px Rand links/rechts, 20px Rand oben/unten
 # Farben BGR-korrigiert für ILI9341 auf dem CYD
 # ─────────────────────────────────────────────────────────────────
 lvgl:
   displays:
     - main_display
-  rotation: 270        # Landscape 320×240 (Software-Rotation; 90 war die falsche Landscape-Lage)
   buffer_size: 25%
 
   style_definitions:
