@@ -548,11 +548,14 @@ display:
   - platform: st7789v
     id: main_display
     spi_id: spi_display
-    model: GENERIC_170X320
+    model: CUSTOM
+    width: 170
+    height: 320
+    offset_width: 35
+    offset_height: 0
     cs_pin: GPIO37
     dc_pin: GPIO39
     reset_pin: GPIO40
-    rotation: 90
     update_interval: 16ms
     auto_clear_enabled: false
 
@@ -601,6 +604,7 @@ font:
 lvgl:
   displays:
     - main_display
+  rotation: 90        # Landscape 320×170
   buffer_size: 25%
 
   style_definitions:
