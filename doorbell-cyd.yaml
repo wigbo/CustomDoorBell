@@ -48,6 +48,14 @@ wifi:
 captive_portal:
 
 # ─────────────────────────────────────────────────────────────────
+# GLOBALS
+# ─────────────────────────────────────────────────────────────────
+globals:
+  - id: custom_timeout_s
+    type: int
+    initial_value: '10'
+
+# ─────────────────────────────────────────────────────────────────
 # HOME ASSISTANT API & OTA
 # ─────────────────────────────────────────────────────────────────
 api:
@@ -57,14 +65,17 @@ api:
         - script.stop: timed_doorbell
         - script.stop: timed_grant
         - script.stop: timed_deny
+        - script.stop: timed_custom
         - script.stop: timed_processing_watchdog
         - lambda: |-
             lv_anim_del(id(icon_bell),  NULL);
             lv_anim_del(id(icon_grant), NULL);
             lv_anim_del(id(icon_deny),  NULL);
+            lv_anim_del(id(card_deny),  NULL);
             lv_anim_del(id(icon_process), NULL);
             lv_anim_del(id(icon_package), NULL);
             lv_anim_del(id(lbl_custom_icon), NULL);
+            lv_obj_set_style_bg_color(id(card_deny), lv_color_hex(0x382525), 0);
         - lvgl.page.show: { id: page_idle, animation: NONE }
         - light.turn_off: backlight
 
@@ -73,14 +84,17 @@ api:
         - script.stop: timed_doorbell
         - script.stop: timed_grant
         - script.stop: timed_deny
+        - script.stop: timed_custom
         - script.stop: timed_processing_watchdog
         - lambda: |-
             lv_anim_del(id(icon_bell),  NULL);
             lv_anim_del(id(icon_grant), NULL);
             lv_anim_del(id(icon_deny),  NULL);
+            lv_anim_del(id(card_deny),  NULL);
             lv_anim_del(id(icon_process), NULL);
             lv_anim_del(id(icon_package), NULL);
             lv_anim_del(id(lbl_custom_icon), NULL);
+            lv_obj_set_style_bg_color(id(card_deny), lv_color_hex(0x382525), 0);
         - light.turn_on: backlight
         - lvgl.page.show: { id: page_welcome, animation: NONE }
 
@@ -88,13 +102,16 @@ api:
       then:
         - script.stop: timed_grant
         - script.stop: timed_deny
+        - script.stop: timed_custom
         - script.stop: timed_processing_watchdog
         - lambda: |-
             lv_anim_del(id(icon_grant), NULL);
             lv_anim_del(id(icon_deny),  NULL);
+            lv_anim_del(id(card_deny),  NULL);
             lv_anim_del(id(icon_process), NULL);
             lv_anim_del(id(icon_package), NULL);
             lv_anim_del(id(lbl_custom_icon), NULL);
+            lv_obj_set_style_bg_color(id(card_deny), lv_color_hex(0x382525), 0);
         - light.turn_on: backlight
         - script.execute: timed_doorbell
 
@@ -103,13 +120,16 @@ api:
         - script.stop: timed_doorbell
         - script.stop: timed_grant
         - script.stop: timed_deny
+        - script.stop: timed_custom
         - script.stop: timed_processing_watchdog
         - lambda: |-
             lv_anim_del(id(icon_bell),  NULL);
             lv_anim_del(id(icon_grant), NULL);
             lv_anim_del(id(icon_deny),  NULL);
+            lv_anim_del(id(card_deny),  NULL);
             lv_anim_del(id(icon_package), NULL);
             lv_anim_del(id(lbl_custom_icon), NULL);
+            lv_obj_set_style_bg_color(id(card_deny), lv_color_hex(0x382525), 0);
         - light.turn_on: backlight
         - lvgl.page.show: { id: page_processing, animation: NONE }
         - lambda: |-
@@ -134,13 +154,16 @@ api:
       then:
         - script.stop: timed_doorbell
         - script.stop: timed_deny
+        - script.stop: timed_custom
         - script.stop: timed_processing_watchdog
         - lambda: |-
             lv_anim_del(id(icon_bell),  NULL);
             lv_anim_del(id(icon_deny),  NULL);
+            lv_anim_del(id(card_deny),  NULL);
             lv_anim_del(id(icon_process), NULL);
             lv_anim_del(id(icon_package), NULL);
             lv_anim_del(id(lbl_custom_icon), NULL);
+            lv_obj_set_style_bg_color(id(card_deny), lv_color_hex(0x382525), 0);
         - light.turn_on: backlight
         - script.execute: timed_grant
 
@@ -148,6 +171,7 @@ api:
       then:
         - script.stop: timed_doorbell
         - script.stop: timed_grant
+        - script.stop: timed_custom
         - script.stop: timed_processing_watchdog
         - lambda: |-
             lv_anim_del(id(icon_bell),  NULL);
@@ -163,13 +187,16 @@ api:
         - script.stop: timed_doorbell
         - script.stop: timed_grant
         - script.stop: timed_deny
+        - script.stop: timed_custom
         - script.stop: timed_processing_watchdog
         - lambda: |-
             lv_anim_del(id(icon_bell),  NULL);
             lv_anim_del(id(icon_grant), NULL);
             lv_anim_del(id(icon_deny),  NULL);
+            lv_anim_del(id(card_deny),  NULL);
             lv_anim_del(id(icon_process), NULL);
             lv_anim_del(id(lbl_custom_icon), NULL);
+            lv_obj_set_style_bg_color(id(card_deny), lv_color_hex(0x382525), 0);
         - light.turn_on: backlight
         - lvgl.page.show: { id: page_package, animation: NONE }
         - lambda: |-
@@ -192,17 +219,24 @@ api:
       variables:
         message: string
         icon: string
+        duration: int
       then:
         - script.stop: timed_doorbell
         - script.stop: timed_grant
         - script.stop: timed_deny
+        - script.stop: timed_custom
         - script.stop: timed_processing_watchdog
+        - globals.set:
+            id: custom_timeout_s
+            value: !lambda "return duration;"
         - lambda: |-
             lv_anim_del(id(icon_bell),  NULL);
             lv_anim_del(id(icon_grant), NULL);
             lv_anim_del(id(icon_deny),  NULL);
+            lv_anim_del(id(card_deny),  NULL);
             lv_anim_del(id(icon_process), NULL);
             lv_anim_del(id(icon_package), NULL);
+            lv_obj_set_style_bg_color(id(card_deny), lv_color_hex(0x382525), 0);
             const char* icon_str = "\U0000E887";
             if      (icon == "warnung") icon_str = "\U0000E002";
             else if (icon == "herz")    icon_str = "\U0000E87D";
@@ -211,22 +245,7 @@ api:
             lv_label_set_text(id(lbl_custom_icon), icon_str);
             lv_label_set_text(id(lbl_custom_text), message.c_str());
         - light.turn_on: backlight
-        - lvgl.page.show: { id: page_custom, animation: NONE }
-        - lambda: |-
-            lv_obj_t *obj = id(lbl_custom_icon);
-            lv_anim_del(obj, NULL);
-            lv_obj_set_style_transform_pivot_x(obj, LV_PCT(50), 0);
-            lv_obj_set_style_transform_pivot_y(obj, LV_PCT(50), 0);
-            lv_anim_t a; lv_anim_init(&a);
-            lv_anim_set_var(&a, obj);
-            lv_anim_set_values(&a, 10, 256);
-            lv_anim_set_time(&a, 600);
-            lv_anim_set_path_cb(&a, lv_anim_path_overshoot);
-            lv_anim_set_exec_cb(&a, [](void *obj, int32_t val) {
-                lv_obj_set_style_transform_zoom((lv_obj_t *)obj, val, 0);
-                lv_obj_invalidate((lv_obj_t *)obj);
-            });
-            lv_anim_start(&a);
+        - script.execute: timed_custom
 
     - service: run_demo
       then:
@@ -302,6 +321,7 @@ script:
       - lvgl.page.show: { id: page_deny, animation: NONE }
       - delay: 100ms
       - lambda: |-
+          // Icon Shake
           lv_obj_t *obj = id(icon_deny);
           lv_anim_del(obj, NULL);
           lv_obj_set_style_translate_x(obj, 0, 0);
@@ -320,10 +340,55 @@ script:
               lv_obj_invalidate((lv_obj_t *)a->var);
           });
           lv_anim_start(&a);
+
+          // Kachel Flash (BGR: 0xFF1744 → 0x4417FF, Karte: 0x382525)
+          lv_obj_t *card = id(card_deny);
+          lv_anim_del(card, NULL);
+          lv_anim_t a2; lv_anim_init(&a2);
+          lv_anim_set_var(&a2, card);
+          lv_anim_set_values(&a2, 0, 255);
+          lv_anim_set_time(&a2, 250);
+          lv_anim_set_reverse_time(&a2, 250);
+          lv_anim_set_repeat_count(&a2, LV_ANIM_REPEAT_INFINITE);
+          lv_anim_set_exec_cb(&a2, [](void *obj, int32_t val) {
+              lv_color_t c = lv_color_mix(lv_color_hex(0x4417FF), lv_color_hex(0x382525), val);
+              lv_obj_set_style_bg_color((lv_obj_t *)obj, c, 0);
+              lv_obj_invalidate((lv_obj_t *)obj);
+          });
+          lv_anim_start(&a2);
       - delay: 5s
       - lambda: |-
           lv_anim_del(id(icon_deny), NULL);
+          lv_anim_del(id(card_deny), NULL);
           lv_obj_set_style_translate_x(id(icon_deny), 0, 0);
+          lv_obj_set_style_bg_color(id(card_deny), lv_color_hex(0x382525), 0);
+      - lvgl.page.show: { id: page_welcome, animation: FADE_IN }
+
+  - id: timed_custom
+    mode: restart
+    then:
+      - lvgl.page.show: { id: page_custom, animation: NONE }
+      - delay: 100ms
+      - lambda: |-
+          lv_obj_t *obj = id(lbl_custom_icon);
+          lv_anim_del(obj, NULL);
+          lv_obj_set_style_transform_pivot_x(obj, LV_PCT(50), 0);
+          lv_obj_set_style_transform_pivot_y(obj, LV_PCT(50), 0);
+          lv_anim_t a; lv_anim_init(&a);
+          lv_anim_set_var(&a, obj);
+          lv_anim_set_values(&a, 256, 320);
+          lv_anim_set_time(&a, 800);
+          lv_anim_set_reverse_time(&a, 800);
+          lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
+          lv_anim_set_exec_cb(&a, [](void *obj, int32_t val) {
+              lv_obj_set_style_transform_zoom((lv_obj_t *)obj, val, 0);
+              lv_obj_invalidate((lv_obj_t *)obj);
+          });
+          lv_anim_start(&a);
+      - delay: !lambda "return id(custom_timeout_s) * 1000;"
+      - lambda: |-
+          lv_anim_del(id(lbl_custom_icon), NULL);
+          lv_obj_set_style_transform_zoom(id(lbl_custom_icon), 256, 0);
       - lvgl.page.show: { id: page_welcome, animation: FADE_IN }
 
   - id: timed_processing_watchdog
@@ -469,27 +534,15 @@ script:
           lv_anim_start(&a);
       - delay: 3s
 
-      # Custom Nachricht
+      # Custom Nachricht (Puls, 3s)
+      - globals.set:
+          id: custom_timeout_s
+          value: "3"
       - lambda: |-
           lv_label_set_text(id(lbl_custom_icon), "\U0000E15B");
           lv_label_set_text(id(lbl_custom_text), "Müll raus!");
-      - lvgl.page.show: { id: page_custom, animation: NONE }
-      - lambda: |-
-          lv_obj_t *obj = id(lbl_custom_icon);
-          lv_anim_del(obj, NULL);
-          lv_obj_set_style_transform_pivot_x(obj, LV_PCT(50), 0);
-          lv_obj_set_style_transform_pivot_y(obj, LV_PCT(50), 0);
-          lv_anim_t a; lv_anim_init(&a);
-          lv_anim_set_var(&a, obj);
-          lv_anim_set_values(&a, 10, 256);
-          lv_anim_set_time(&a, 600);
-          lv_anim_set_path_cb(&a, lv_anim_path_overshoot);
-          lv_anim_set_exec_cb(&a, [](void *obj, int32_t val) {
-              lv_obj_set_style_transform_zoom((lv_obj_t *)obj, val, 0);
-              lv_obj_invalidate((lv_obj_t *)obj);
-          });
-          lv_anim_start(&a);
-      - delay: 3s
+      - script.execute: timed_custom
+      - delay: 4s
 
       # Timeout-Fehler
       - lvgl.page.show: { id: page_error, animation: NONE }
@@ -816,6 +869,7 @@ lvgl:
             scrollbar_mode: "off"
             widgets:
               - obj:
+                  id: card_deny
                   width: 290
                   height: 160
                   align: CENTER
