@@ -582,6 +582,9 @@ display:
     cs_pin: GPIO15
     dc_pin: GPIO2
     invert_colors: false
+    transform:
+      swap_xy: true
+      mirror_y: true
     update_interval: never
     auto_clear_enabled: false
 
@@ -631,7 +634,6 @@ font:
 lvgl:
   displays:
     - main_display
-  rotation: 90
   buffer_size: 25%
 
   style_definitions:
