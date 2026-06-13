@@ -45,6 +45,7 @@ globals:
 # ─────────────────────────────────────────────────────────────────
 ethernet:
   type: W5500
+  interface: spi3
   clk_pin: GPIO13
   mosi_pin: GPIO11
   miso_pin: GPIO12
@@ -459,7 +460,6 @@ light:
 
 spi:
   - id: spi_display
-    interface: spi3
     clk_pin: GPIO36
     mosi_pin: GPIO35
 
