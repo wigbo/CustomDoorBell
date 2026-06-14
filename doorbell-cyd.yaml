@@ -67,7 +67,7 @@ api:
             lv_anim_del(id(icon_package), NULL);
             lv_anim_del(id(lbl_custom_icon), NULL);
             lv_obj_set_style_bg_color(id(card_deny), lv_color_hex(0x252538), 0);
-        - lvgl.page.show: { id: page_idle, animation: FADE_ON, time: 500ms }
+        - lvgl.page.show: { id: page_idle, animation: FADE_IN, time: 500ms }
         - delay: 500ms
         - light.turn_off: backlight
 
@@ -88,7 +88,7 @@ api:
             lv_anim_del(id(lbl_custom_icon), NULL);
             lv_obj_set_style_bg_color(id(card_deny), lv_color_hex(0x252538), 0);
         - light.turn_on: backlight
-        - lvgl.page.show: { id: page_welcome, animation: FADE_ON, time: 500ms }
+        - lvgl.page.show: { id: page_welcome, animation: FADE_IN, time: 500ms }
 
     - service: trigger_doorbell
       then:
@@ -293,7 +293,7 @@ script:
       - lambda: |-
           lv_anim_del(id(icon_bell), NULL);
           lv_obj_set_style_transform_zoom(id(icon_bell), 256, 0);
-      - lvgl.page.show: { id: page_welcome, animation: FADE_ON, time: 500ms }
+      - lvgl.page.show: { id: page_welcome, animation: FADE_IN, time: 500ms }
 
   - id: timed_grant
     mode: restart
@@ -320,7 +320,7 @@ script:
       - lambda: |-
           lv_anim_del(id(icon_grant), NULL);
           lv_obj_set_style_transform_zoom(id(icon_grant), 256, 0);
-      - lvgl.page.show: { id: page_welcome, animation: FADE_ON, time: 500ms }
+      - lvgl.page.show: { id: page_welcome, animation: FADE_IN, time: 500ms }
 
   - id: timed_deny
     mode: restart
@@ -348,7 +348,7 @@ script:
           });
           lv_anim_start(&a);
 
-          // Kachel Flash (RGB: 0xFF1744 -> 0x252538)
+          // Kachel Flash
           lv_obj_t *card = id(card_deny);
           lv_anim_del(card, NULL);
           lv_anim_t a2; lv_anim_init(&a2);
@@ -369,7 +369,7 @@ script:
           lv_anim_del(id(card_deny), NULL);
           lv_obj_set_style_translate_x(id(icon_deny), 0, 0);
           lv_obj_set_style_bg_color(id(card_deny), lv_color_hex(0x252538), 0);
-      - lvgl.page.show: { id: page_welcome, animation: FADE_ON, time: 500ms }
+      - lvgl.page.show: { id: page_welcome, animation: FADE_IN, time: 500ms }
 
   - id: timed_custom
     mode: restart
@@ -378,7 +378,7 @@ script:
       - lambda: |-
           lv_anim_del(id(lbl_custom_icon), NULL);
           lv_obj_set_style_transform_zoom(id(lbl_custom_icon), 256, 0);
-      - lvgl.page.show: { id: page_welcome, animation: FADE_ON, time: 500ms }
+      - lvgl.page.show: { id: page_welcome, animation: FADE_IN, time: 500ms }
 
   - id: timed_processing_watchdog
     mode: restart
@@ -389,11 +389,10 @@ script:
           lv_obj_set_style_transform_angle(id(icon_process), 0, 0);
       - lvgl.page.show: { id: page_error, animation: NONE }
       - delay: 5s
-      - lvgl.page.show: { id: page_idle, animation: FADE_ON, time: 500ms }
+      - lvgl.page.show: { id: page_idle, animation: FADE_IN, time: 500ms }
       - delay: 500ms
       - light.turn_off: backlight
 
-  # Demo-Loop: alle Screens automatisch durchlaufen
   - id: demo_loop
     mode: restart
     then:
@@ -424,10 +423,10 @@ script:
       - lambda: |-
           lv_anim_del(id(icon_bell), NULL);
           lv_obj_set_style_transform_zoom(id(icon_bell), 256, 0);
-      - lvgl.page.show: { id: page_welcome, animation: FADE_ON, time: 500ms }
+      - lvgl.page.show: { id: page_welcome, animation: FADE_IN, time: 500ms }
       - delay: 1s
 
-      # Fingerprint Processing (Rotiert)
+      # Fingerprint Processing
       - lvgl.page.show: { id: page_processing, animation: NONE }
       - lambda: |-
           lv_obj_t *obj = id(icon_process);
@@ -472,10 +471,10 @@ script:
       - lambda: |-
           lv_anim_del(id(icon_grant), NULL);
           lv_obj_set_style_transform_zoom(id(icon_grant), 256, 0);
-      - lvgl.page.show: { id: page_welcome, animation: FADE_ON, time: 500ms }
+      - lvgl.page.show: { id: page_welcome, animation: FADE_IN, time: 500ms }
       - delay: 1s
 
-      # Zutritt verweigert (Shake + Flash)
+      # Zutritt verweigert
       - lvgl.page.show: { id: page_deny, animation: NONE }
       - delay: 100ms
       - lambda: |-
@@ -517,10 +516,10 @@ script:
           lv_anim_del(id(card_deny), NULL);
           lv_obj_set_style_translate_x(id(icon_deny), 0, 0);
           lv_obj_set_style_bg_color(id(card_deny), lv_color_hex(0x252538), 0);
-      - lvgl.page.show: { id: page_welcome, animation: FADE_ON, time: 500ms }
+      - lvgl.page.show: { id: page_welcome, animation: FADE_IN, time: 500ms }
       - delay: 1s
 
-      # Paket (Pop-In)
+      # Paket
       - lvgl.page.show: { id: page_package, animation: NONE }
       - lambda: |-
           lv_obj_t *obj = id(icon_package);
@@ -539,7 +538,7 @@ script:
           lv_anim_start(&a);
       - delay: 3s
 
-      # Custom Nachricht (Pop-In)
+      # Custom Nachricht
       - globals.set:
           id: custom_timeout_s
           value: "3"
@@ -570,13 +569,12 @@ script:
       - delay: 3s
 
       # Neustart
-      - lvgl.page.show: { id: page_welcome, animation: FADE_ON, time: 500ms }
+      - lvgl.page.show: { id: page_welcome, animation: FADE_IN, time: 500ms }
       - delay: 5s
       - script.execute: demo_loop
 
 # ─────────────────────────────────────────────────────────────────
 # DISPLAY: ILI9341 320×240 (CYD)
-# CLK=GPIO14  MOSI=GPIO13  CS=GPIO15  DC=GPIO2  BLK=GPIO21
 # ─────────────────────────────────────────────────────────────────
 output:
   - platform: gpio
@@ -601,7 +599,7 @@ display:
     model: ILI9341
     cs_pin: GPIO15
     dc_pin: GPIO2
-    rotation: 270°
+    # rotation: 270°
     color_order: BGR
     invert_colors: false
     update_interval: never
@@ -644,6 +642,7 @@ font:
 lvgl:
   displays:
     - main_display
+  rotation: 270
   buffer_size: 10%
 
   style_definitions:
@@ -806,8 +805,8 @@ lvgl:
                         align: TOP_LEFT
                         x: 0
                         y: 0
-                        bg_color: 0x00E5FF
-                        bg_grad_color: 0x7E57C2
+                        bg_color: 0x3BEBFF
+                        bg_grad_color: 0x0098FF
                         bg_grad_dir: HOR
                         border_width: 0
                         radius: 0
@@ -816,15 +815,15 @@ lvgl:
                         id: icon_process
                         text: "\U0000E90D"
                         text_font: font_icons
-                        text_color: 0x00E5FF
+                        text_color: 0x3BEBFF
                         align: CENTER
-                        y: -22
+                        y: -30
                     - label:
                         text: "Prüfe..."
                         text_font: font_huge_bold
                         text_color: 0xFFFFFF
                         align: CENTER
-                        y: 28
+                        y: 35
 
     # ── ZUTRITT GEWÄHRT ──────────────────────────────────────────
     - id: page_grant
@@ -849,8 +848,8 @@ lvgl:
                         align: TOP_LEFT
                         x: 0
                         y: 0
-                        bg_color: 0x00FF87
-                        bg_grad_color: 0x00B8D4
+                        bg_color: 0x87FF00
+                        bg_grad_color: 0xD4B800
                         bg_grad_dir: HOR
                         border_width: 0
                         radius: 0
@@ -859,9 +858,9 @@ lvgl:
                         id: icon_grant
                         text: "\U0000EF64"
                         text_font: font_icons
-                        text_color: 0x00FF87
+                        text_color: 0x87FF00
                         align: CENTER
-                        y: -22
+                        y: -30
                     - label:
                         text: "Tür geöffnet"
                         text_font: font_large
