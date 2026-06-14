@@ -1,15 +1,6 @@
 # ═══════════════════════════════════════════════════════════════════
 # CustomDoorBell — Cheap Yellow Display (ESP32-2432S028)
 # GUI-Test-Port: ILI9341 320×240, kein Ethernet, kein Fingerprint
-#
-# Hardware:
-#   Display:    ILI9341 320×240 SPI
-#               CLK=GPIO14  MOSI=GPIO13  CS=GPIO15  DC=GPIO2
-#               Backlight=GPIO21
-#   Board:      ESP32-2432S028 (CYD), 4MB Flash, kein PSRAM
-#
-# Zweck: GUI-Validierung aller Screens und Animationen vor dem
-#        ersten Flash der echten Doorbell-Hardware.
 # ═══════════════════════════════════════════════════════════════════
 
 substitutions:
@@ -48,7 +39,7 @@ wifi:
 captive_portal:
 
 # ─────────────────────────────────────────────────────────────────
-# GLOBALS
+# GLOBALS (Für dynamischen Custom Timeout)
 # ─────────────────────────────────────────────────────────────────
 globals:
   - id: custom_timeout_s
@@ -75,8 +66,9 @@ api:
             lv_anim_del(id(icon_process), NULL);
             lv_anim_del(id(icon_package), NULL);
             lv_anim_del(id(lbl_custom_icon), NULL);
-            lv_obj_set_style_bg_color(id(card_deny), lv_color_hex(0x382525), 0);
-        - lvgl.page.show: { id: page_idle, animation: NONE }
+            lv_obj_set_style_bg_color(id(card_deny), lv_color_hex(0x252538), 0);
+        - lvgl.page.show: { id: page_idle, animation: FADE_ON, time: 500ms }
+        - delay: 500ms
         - light.turn_off: backlight
 
     - service: show_welcome
@@ -94,9 +86,9 @@ api:
             lv_anim_del(id(icon_process), NULL);
             lv_anim_del(id(icon_package), NULL);
             lv_anim_del(id(lbl_custom_icon), NULL);
-            lv_obj_set_style_bg_color(id(card_deny), lv_color_hex(0x382525), 0);
+            lv_obj_set_style_bg_color(id(card_deny), lv_color_hex(0x252538), 0);
         - light.turn_on: backlight
-        - lvgl.page.show: { id: page_welcome, animation: NONE }
+        - lvgl.page.show: { id: page_welcome, animation: FADE_ON, time: 500ms }
 
     - service: trigger_doorbell
       then:
@@ -111,7 +103,7 @@ api:
             lv_anim_del(id(icon_process), NULL);
             lv_anim_del(id(icon_package), NULL);
             lv_anim_del(id(lbl_custom_icon), NULL);
-            lv_obj_set_style_bg_color(id(card_deny), lv_color_hex(0x382525), 0);
+            lv_obj_set_style_bg_color(id(card_deny), lv_color_hex(0x252538), 0);
         - light.turn_on: backlight
         - script.execute: timed_doorbell
 
@@ -129,7 +121,7 @@ api:
             lv_anim_del(id(card_deny),  NULL);
             lv_anim_del(id(icon_package), NULL);
             lv_anim_del(id(lbl_custom_icon), NULL);
-            lv_obj_set_style_bg_color(id(card_deny), lv_color_hex(0x382525), 0);
+            lv_obj_set_style_bg_color(id(card_deny), lv_color_hex(0x252538), 0);
         - light.turn_on: backlight
         - lvgl.page.show: { id: page_processing, animation: NONE }
         - lambda: |-
@@ -139,12 +131,11 @@ api:
             lv_obj_set_style_transform_pivot_y(obj, LV_PCT(50), 0);
             lv_anim_t a; lv_anim_init(&a);
             lv_anim_set_var(&a, obj);
-            lv_anim_set_values(&a, 256, 290);
-            lv_anim_set_time(&a, 700);
-            lv_anim_set_reverse_time(&a, 700);
+            lv_anim_set_values(&a, 0, 3600);
+            lv_anim_set_time(&a, 2000);
             lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
             lv_anim_set_exec_cb(&a, [](void *obj, int32_t val) {
-                lv_obj_set_style_transform_zoom((lv_obj_t *)obj, val, 0);
+                lv_obj_set_style_transform_angle((lv_obj_t *)obj, val, 0);
                 lv_obj_invalidate((lv_obj_t *)obj);
             });
             lv_anim_start(&a);
@@ -163,7 +154,7 @@ api:
             lv_anim_del(id(icon_process), NULL);
             lv_anim_del(id(icon_package), NULL);
             lv_anim_del(id(lbl_custom_icon), NULL);
-            lv_obj_set_style_bg_color(id(card_deny), lv_color_hex(0x382525), 0);
+            lv_obj_set_style_bg_color(id(card_deny), lv_color_hex(0x252538), 0);
         - light.turn_on: backlight
         - script.execute: timed_grant
 
@@ -196,7 +187,7 @@ api:
             lv_anim_del(id(card_deny),  NULL);
             lv_anim_del(id(icon_process), NULL);
             lv_anim_del(id(lbl_custom_icon), NULL);
-            lv_obj_set_style_bg_color(id(card_deny), lv_color_hex(0x382525), 0);
+            lv_obj_set_style_bg_color(id(card_deny), lv_color_hex(0x252538), 0);
         - light.turn_on: backlight
         - lvgl.page.show: { id: page_package, animation: NONE }
         - lambda: |-
@@ -236,7 +227,7 @@ api:
             lv_anim_del(id(card_deny),  NULL);
             lv_anim_del(id(icon_process), NULL);
             lv_anim_del(id(icon_package), NULL);
-            lv_obj_set_style_bg_color(id(card_deny), lv_color_hex(0x382525), 0);
+            lv_obj_set_style_bg_color(id(card_deny), lv_color_hex(0x252538), 0);
             const char* icon_str = "\U0000E887";
             if      (icon == "warnung") icon_str = "\U0000E002";
             else if (icon == "herz")    icon_str = "\U0000E87D";
@@ -245,6 +236,22 @@ api:
             lv_label_set_text(id(lbl_custom_icon), icon_str);
             lv_label_set_text(id(lbl_custom_text), message.c_str());
         - light.turn_on: backlight
+        - lvgl.page.show: { id: page_custom, animation: NONE }
+        - lambda: |-
+            lv_obj_t *obj = id(lbl_custom_icon);
+            lv_anim_del(obj, NULL);
+            lv_obj_set_style_transform_pivot_x(obj, LV_PCT(50), 0);
+            lv_obj_set_style_transform_pivot_y(obj, LV_PCT(50), 0);
+            lv_anim_t a; lv_anim_init(&a);
+            lv_anim_set_var(&a, obj);
+            lv_anim_set_values(&a, 10, 256);
+            lv_anim_set_time(&a, 600);
+            lv_anim_set_path_cb(&a, lv_anim_path_overshoot);
+            lv_anim_set_exec_cb(&a, [](void *obj, int32_t val) {
+                lv_obj_set_style_transform_zoom((lv_obj_t *)obj, val, 0);
+                lv_obj_invalidate((lv_obj_t *)obj);
+            });
+            lv_anim_start(&a);
         - script.execute: timed_custom
 
     - service: run_demo
@@ -286,7 +293,7 @@ script:
       - lambda: |-
           lv_anim_del(id(icon_bell), NULL);
           lv_obj_set_style_transform_zoom(id(icon_bell), 256, 0);
-      - lvgl.page.show: { id: page_welcome, animation: FADE_IN }
+      - lvgl.page.show: { id: page_welcome, animation: FADE_ON, time: 500ms }
 
   - id: timed_grant
     mode: restart
@@ -313,7 +320,7 @@ script:
       - lambda: |-
           lv_anim_del(id(icon_grant), NULL);
           lv_obj_set_style_transform_zoom(id(icon_grant), 256, 0);
-      - lvgl.page.show: { id: page_welcome, animation: FADE_IN }
+      - lvgl.page.show: { id: page_welcome, animation: FADE_ON, time: 500ms }
 
   - id: timed_deny
     mode: restart
@@ -341,7 +348,7 @@ script:
           });
           lv_anim_start(&a);
 
-          // Kachel Flash (BGR: 0xFF1744 → 0x4417FF, Karte: 0x382525)
+          // Kachel Flash (RGB: 0xFF1744 -> 0x252538)
           lv_obj_t *card = id(card_deny);
           lv_anim_del(card, NULL);
           lv_anim_t a2; lv_anim_init(&a2);
@@ -351,7 +358,7 @@ script:
           lv_anim_set_reverse_time(&a2, 250);
           lv_anim_set_repeat_count(&a2, LV_ANIM_REPEAT_INFINITE);
           lv_anim_set_exec_cb(&a2, [](void *obj, int32_t val) {
-              lv_color_t c = lv_color_mix(lv_color_hex(0x4417FF), lv_color_hex(0x382525), val);
+              lv_color_t c = lv_color_mix(lv_color_hex(0xFF1744), lv_color_hex(0x252538), val);
               lv_obj_set_style_bg_color((lv_obj_t *)obj, c, 0);
               lv_obj_invalidate((lv_obj_t *)obj);
           });
@@ -361,35 +368,17 @@ script:
           lv_anim_del(id(icon_deny), NULL);
           lv_anim_del(id(card_deny), NULL);
           lv_obj_set_style_translate_x(id(icon_deny), 0, 0);
-          lv_obj_set_style_bg_color(id(card_deny), lv_color_hex(0x382525), 0);
-      - lvgl.page.show: { id: page_welcome, animation: FADE_IN }
+          lv_obj_set_style_bg_color(id(card_deny), lv_color_hex(0x252538), 0);
+      - lvgl.page.show: { id: page_welcome, animation: FADE_ON, time: 500ms }
 
   - id: timed_custom
     mode: restart
     then:
-      - lvgl.page.show: { id: page_custom, animation: NONE }
-      - delay: 100ms
-      - lambda: |-
-          lv_obj_t *obj = id(lbl_custom_icon);
-          lv_anim_del(obj, NULL);
-          lv_obj_set_style_transform_pivot_x(obj, LV_PCT(50), 0);
-          lv_obj_set_style_transform_pivot_y(obj, LV_PCT(50), 0);
-          lv_anim_t a; lv_anim_init(&a);
-          lv_anim_set_var(&a, obj);
-          lv_anim_set_values(&a, 256, 320);
-          lv_anim_set_time(&a, 800);
-          lv_anim_set_reverse_time(&a, 800);
-          lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
-          lv_anim_set_exec_cb(&a, [](void *obj, int32_t val) {
-              lv_obj_set_style_transform_zoom((lv_obj_t *)obj, val, 0);
-              lv_obj_invalidate((lv_obj_t *)obj);
-          });
-          lv_anim_start(&a);
       - delay: !lambda "return id(custom_timeout_s) * 1000;"
       - lambda: |-
           lv_anim_del(id(lbl_custom_icon), NULL);
           lv_obj_set_style_transform_zoom(id(lbl_custom_icon), 256, 0);
-      - lvgl.page.show: { id: page_welcome, animation: FADE_IN }
+      - lvgl.page.show: { id: page_welcome, animation: FADE_ON, time: 500ms }
 
   - id: timed_processing_watchdog
     mode: restart
@@ -397,14 +386,14 @@ script:
       - delay: 8s
       - lambda: |-
           lv_anim_del(id(icon_process), NULL);
-          lv_obj_set_style_transform_zoom(id(icon_process), 256, 0);
+          lv_obj_set_style_transform_angle(id(icon_process), 0, 0);
       - lvgl.page.show: { id: page_error, animation: NONE }
       - delay: 5s
-      - lvgl.page.show: { id: page_idle, animation: FADE_IN }
+      - lvgl.page.show: { id: page_idle, animation: FADE_ON, time: 500ms }
+      - delay: 500ms
       - light.turn_off: backlight
 
   # Demo-Loop: alle Screens automatisch durchlaufen
-  # Direkte Script-Aufrufe — kein HA nötig, standalone testbar
   - id: demo_loop
     mode: restart
     then:
@@ -435,10 +424,10 @@ script:
       - lambda: |-
           lv_anim_del(id(icon_bell), NULL);
           lv_obj_set_style_transform_zoom(id(icon_bell), 256, 0);
-      - lvgl.page.show: { id: page_welcome, animation: FADE_IN }
+      - lvgl.page.show: { id: page_welcome, animation: FADE_ON, time: 500ms }
       - delay: 1s
 
-      # Fingerprint Processing (Puls)
+      # Fingerprint Processing (Rotiert)
       - lvgl.page.show: { id: page_processing, animation: NONE }
       - lambda: |-
           lv_obj_t *obj = id(icon_process);
@@ -447,19 +436,18 @@ script:
           lv_obj_set_style_transform_pivot_y(obj, LV_PCT(50), 0);
           lv_anim_t a; lv_anim_init(&a);
           lv_anim_set_var(&a, obj);
-          lv_anim_set_values(&a, 256, 290);
-          lv_anim_set_time(&a, 700);
-          lv_anim_set_reverse_time(&a, 700);
+          lv_anim_set_values(&a, 0, 3600);
+          lv_anim_set_time(&a, 2000);
           lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
           lv_anim_set_exec_cb(&a, [](void *obj, int32_t val) {
-              lv_obj_set_style_transform_zoom((lv_obj_t *)obj, val, 0);
+              lv_obj_set_style_transform_angle((lv_obj_t *)obj, val, 0);
               lv_obj_invalidate((lv_obj_t *)obj);
           });
           lv_anim_start(&a);
       - delay: 3s
       - lambda: |-
           lv_anim_del(id(icon_process), NULL);
-          lv_obj_set_style_transform_zoom(id(icon_process), 256, 0);
+          lv_obj_set_style_transform_angle(id(icon_process), 0, 0);
 
       # Zutritt gewährt
       - lvgl.page.show: { id: page_grant, animation: NONE }
@@ -484,10 +472,10 @@ script:
       - lambda: |-
           lv_anim_del(id(icon_grant), NULL);
           lv_obj_set_style_transform_zoom(id(icon_grant), 256, 0);
-      - lvgl.page.show: { id: page_welcome, animation: FADE_IN }
+      - lvgl.page.show: { id: page_welcome, animation: FADE_ON, time: 500ms }
       - delay: 1s
 
-      # Zutritt verweigert (Shake)
+      # Zutritt verweigert (Shake + Flash)
       - lvgl.page.show: { id: page_deny, animation: NONE }
       - delay: 100ms
       - lambda: |-
@@ -508,11 +496,28 @@ script:
               lv_obj_set_style_translate_x((lv_obj_t *)a->var, 0, 0);
           });
           lv_anim_start(&a);
+
+          lv_obj_t *card = id(card_deny);
+          lv_anim_del(card, NULL);
+          lv_anim_t a2; lv_anim_init(&a2);
+          lv_anim_set_var(&a2, card);
+          lv_anim_set_values(&a2, 0, 255);
+          lv_anim_set_time(&a2, 250);
+          lv_anim_set_reverse_time(&a2, 250);
+          lv_anim_set_repeat_count(&a2, LV_ANIM_REPEAT_INFINITE);
+          lv_anim_set_exec_cb(&a2, [](void *obj, int32_t val) {
+              lv_color_t c = lv_color_mix(lv_color_hex(0xFF1744), lv_color_hex(0x252538), val);
+              lv_obj_set_style_bg_color((lv_obj_t *)obj, c, 0);
+              lv_obj_invalidate((lv_obj_t *)obj);
+          });
+          lv_anim_start(&a2);
       - delay: 3s
       - lambda: |-
           lv_anim_del(id(icon_deny), NULL);
+          lv_anim_del(id(card_deny), NULL);
           lv_obj_set_style_translate_x(id(icon_deny), 0, 0);
-      - lvgl.page.show: { id: page_welcome, animation: FADE_IN }
+          lv_obj_set_style_bg_color(id(card_deny), lv_color_hex(0x252538), 0);
+      - lvgl.page.show: { id: page_welcome, animation: FADE_ON, time: 500ms }
       - delay: 1s
 
       # Paket (Pop-In)
@@ -534,13 +539,29 @@ script:
           lv_anim_start(&a);
       - delay: 3s
 
-      # Custom Nachricht (Puls, 3s)
+      # Custom Nachricht (Pop-In)
       - globals.set:
           id: custom_timeout_s
           value: "3"
       - lambda: |-
           lv_label_set_text(id(lbl_custom_icon), "\U0000E15B");
           lv_label_set_text(id(lbl_custom_text), "Müll raus!");
+      - lvgl.page.show: { id: page_custom, animation: NONE }
+      - lambda: |-
+          lv_obj_t *obj = id(lbl_custom_icon);
+          lv_anim_del(obj, NULL);
+          lv_obj_set_style_transform_pivot_x(obj, LV_PCT(50), 0);
+          lv_obj_set_style_transform_pivot_y(obj, LV_PCT(50), 0);
+          lv_anim_t a; lv_anim_init(&a);
+          lv_anim_set_var(&a, obj);
+          lv_anim_set_values(&a, 10, 256);
+          lv_anim_set_time(&a, 600);
+          lv_anim_set_path_cb(&a, lv_anim_path_overshoot);
+          lv_anim_set_exec_cb(&a, [](void *obj, int32_t val) {
+              lv_obj_set_style_transform_zoom((lv_obj_t *)obj, val, 0);
+              lv_obj_invalidate((lv_obj_t *)obj);
+          });
+          lv_anim_start(&a);
       - script.execute: timed_custom
       - delay: 4s
 
@@ -549,14 +570,13 @@ script:
       - delay: 3s
 
       # Neustart
-      - lvgl.page.show: { id: page_welcome, animation: FADE_IN }
+      - lvgl.page.show: { id: page_welcome, animation: FADE_ON, time: 500ms }
       - delay: 5s
       - script.execute: demo_loop
 
 # ─────────────────────────────────────────────────────────────────
 # DISPLAY: ILI9341 320×240 (CYD)
 # CLK=GPIO14  MOSI=GPIO13  CS=GPIO15  DC=GPIO2  BLK=GPIO21
-# Display nativ + mipi_spi-Treiber → korrekte Landscape 320×240
 # ─────────────────────────────────────────────────────────────────
 output:
   - platform: gpio
@@ -571,76 +591,60 @@ light:
     restore_mode: ALWAYS_ON
 
 spi:
-  - id: lcd
-    clk_pin: GPIO14
-    mosi_pin: GPIO13
-    miso_pin: GPIO12
+  clk_pin: GPIO14
+  mosi_pin: GPIO13
+  miso_pin: GPIO12
 
 display:
-  - platform: mipi_spi
+  - platform: ili9xxx
     id: main_display
-    spi_id: lcd
     model: ILI9341
     cs_pin: GPIO15
     dc_pin: GPIO2
+    rotation: 270°
+    color_order: BGR
     invert_colors: false
-    dimensions:
-      width: 320
-      height: 240
-    transform:
-      swap_xy: true
-      mirror_x: false
-      mirror_y: false
     update_interval: never
     auto_clear_enabled: false
 
 # ─────────────────────────────────────────────────────────────────
-# FONTS (identisch mit doorbell.yaml)
+# FONTS
 # ─────────────────────────────────────────────────────────────────
 font:
   - file: "gfonts://Montserrat@700"
     id: font_huge_bold
     size: 40
-    extras:
-      - file: "gfonts://Montserrat@700"
-        glyphs: "äöüÄÖÜß"
+    glyphs: "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~ äöüÄÖÜß"
   - file: "gfonts://Montserrat"
     id: font_large
     size: 26
-    extras:
-      - file: "gfonts://Montserrat"
-        glyphs: "äöüÄÖÜß"
+    glyphs: "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~ äöüÄÖÜß"
   - file: "gfonts://Montserrat"
     id: font_medium
     size: 20
-    extras:
-      - file: "gfonts://Montserrat"
-        glyphs: "äöüÄÖÜß"
+    glyphs: "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~ äöüÄÖÜß"
   - file: "gfonts://Material Icons"
     id: font_icons
     size: 55
     glyphs:
-      - "\U0000EF64"  # check_circle   (Zutritt)
-      - "\U0000E5C9"  # cancel         (Verweigert)
-      - "\U0000E58F"  # local_shipping (Paket)
-      - "\U0000E7F4"  # notifications  (Klingel)
-      - "\U0000E887"  # info           (Custom default)
-      - "\U0000E002"  # warning        (Warnung / Fehler)
-      - "\U0000E87D"  # favorite       (Herz)
-      - "\U0000E88A"  # home           (Haus)
-      - "\U0000E15B"  # delete         (Müll)
-      - "\U0000E90D"  # fingerprint    (Verarbeitung)
+      - "\U0000EF64"  # check_circle
+      - "\U0000E5C9"  # cancel
+      - "\U0000E58F"  # local_shipping
+      - "\U0000E7F4"  # notifications
+      - "\U0000E887"  # info
+      - "\U0000E002"  # warning
+      - "\U0000E87D"  # favorite
+      - "\U0000E88A"  # home
+      - "\U0000E15B"  # delete
+      - "\U0000E90D"  # fingerprint
 
 # ─────────────────────────────────────────────────────────────────
-# LVGL: Display-Seiten — v5.0 Design
-# Landscape 320×240 (mipi_spi + dimensions 320×240 + swap_xy)
-# Karte 290×200: 15px Rand links/rechts, 20px Rand oben/unten
-# Farben BGR-korrigiert für ILI9341 auf dem CYD
+# LVGL: Display-Seiten
 # ─────────────────────────────────────────────────────────────────
 lvgl:
   displays:
     - main_display
-  buffer_size: 25%
+  buffer_size: 10%
 
   style_definitions:
     - id: base_style
@@ -654,12 +658,11 @@ lvgl:
       radius: 12
       border_width: 0
       bg_opa: COVER
-      bg_color: 0x382525    # BGR: #252538 dunkel-navy
+      bg_color: 0x252538
       pad_all: 0
       clip_corner: true
 
   pages:
-
     # ── IDLE ─────────────────────────────────────────────────────
     - id: page_idle
       scrollbar_mode: "off"
@@ -701,7 +704,7 @@ lvgl:
             widgets:
               - obj:
                   width: 290
-                  height: 200
+                  height: 160
                   align: CENTER
                   styles: [card_style]
                   widgets:
@@ -711,8 +714,8 @@ lvgl:
                         align: TOP_LEFT
                         x: 0
                         y: 0
-                        bg_color: 0xC2577E
-                        bg_grad_color: 0xFFE500
+                        bg_color: 0x7E57C2
+                        bg_grad_color: 0x00E5FF
                         bg_grad_dir: HOR
                         border_width: 0
                         radius: 0
@@ -721,20 +724,20 @@ lvgl:
                         text: "Willkommen bei"
                         text_font: font_large
                         align: CENTER
-                        y: -40
+                        y: -30
                         text_color: 0xAAAAAA
                     - obj:
                         width: 160
                         height: 2
                         align: CENTER
-                        y: -8
+                        y: -2
                         bg_color: 0x1A1A1A
                         styles: [base_style]
                     - label:
                         text: "Familie Tulum"
                         text_font: font_huge_bold
                         align: CENTER
-                        y: 20
+                        y: 26
                         text_color: 0xFFFFFF
 
     # ── KLINGELN ─────────────────────────────────────────────────
@@ -750,7 +753,7 @@ lvgl:
             widgets:
               - obj:
                   width: 290
-                  height: 200
+                  height: 160
                   align: CENTER
                   styles: [card_style]
                   widgets:
@@ -760,8 +763,8 @@ lvgl:
                         align: TOP_LEFT
                         x: 0
                         y: 0
-                        bg_color: 0xFFE500
-                        bg_grad_color: 0xD57B3A
+                        bg_color: 0x00E5FF
+                        bg_grad_color: 0x3A7BD5
                         bg_grad_dir: HOR
                         border_width: 0
                         radius: 0
@@ -770,15 +773,15 @@ lvgl:
                         id: icon_bell
                         text: "\U0000E7F4"
                         text_font: font_icons
-                        text_color: 0xFFE500
+                        text_color: 0x00E5FF
                         align: CENTER
-                        y: -30
+                        y: -22
                     - label:
                         text: "Es klingelt"
                         text_font: font_large
                         text_color: 0xFFFFFF
                         align: CENTER
-                        y: 35
+                        y: 28
 
     # ── VERARBEITUNG ──────────────────────────────────────────────
     - id: page_processing
@@ -793,7 +796,7 @@ lvgl:
             widgets:
               - obj:
                   width: 290
-                  height: 200
+                  height: 160
                   align: CENTER
                   styles: [card_style]
                   widgets:
@@ -803,8 +806,8 @@ lvgl:
                         align: TOP_LEFT
                         x: 0
                         y: 0
-                        bg_color: 0x3BEBFF
-                        bg_grad_color: 0x0098FF
+                        bg_color: 0x00E5FF
+                        bg_grad_color: 0x7E57C2
                         bg_grad_dir: HOR
                         border_width: 0
                         radius: 0
@@ -813,15 +816,15 @@ lvgl:
                         id: icon_process
                         text: "\U0000E90D"
                         text_font: font_icons
-                        text_color: 0x3BEBFF
+                        text_color: 0x00E5FF
                         align: CENTER
-                        y: -30
+                        y: -22
                     - label:
                         text: "Prüfe..."
                         text_font: font_huge_bold
                         text_color: 0xFFFFFF
                         align: CENTER
-                        y: 35
+                        y: 28
 
     # ── ZUTRITT GEWÄHRT ──────────────────────────────────────────
     - id: page_grant
@@ -836,7 +839,7 @@ lvgl:
             widgets:
               - obj:
                   width: 290
-                  height: 200
+                  height: 160
                   align: CENTER
                   styles: [card_style]
                   widgets:
@@ -846,8 +849,8 @@ lvgl:
                         align: TOP_LEFT
                         x: 0
                         y: 0
-                        bg_color: 0x87FF00
-                        bg_grad_color: 0xD4B800
+                        bg_color: 0x00FF87
+                        bg_grad_color: 0x00B8D4
                         bg_grad_dir: HOR
                         border_width: 0
                         radius: 0
@@ -856,9 +859,9 @@ lvgl:
                         id: icon_grant
                         text: "\U0000EF64"
                         text_font: font_icons
-                        text_color: 0x87FF00
+                        text_color: 0x00FF87
                         align: CENTER
-                        y: -30
+                        y: -22
                     - label:
                         text: "Tür geöffnet"
                         text_font: font_large
@@ -880,7 +883,7 @@ lvgl:
               - obj:
                   id: card_deny
                   width: 290
-                  height: 200
+                  height: 160
                   align: CENTER
                   styles: [card_style]
                   widgets:
@@ -890,8 +893,8 @@ lvgl:
                         align: TOP_LEFT
                         x: 0
                         y: 0
-                        bg_color: 0x5252FF
-                        bg_grad_color: 0x4417FF
+                        bg_color: 0xFF5252
+                        bg_grad_color: 0xFF1744
                         bg_grad_dir: HOR
                         border_width: 0
                         radius: 0
@@ -900,7 +903,7 @@ lvgl:
                         id: icon_deny
                         text: "\U0000E5C9"
                         text_font: font_icons
-                        text_color: 0x5252FF
+                        text_color: 0xFF5252
                         align: CENTER
                         y: -30
                     - label:
@@ -923,7 +926,7 @@ lvgl:
             widgets:
               - obj:
                   width: 290
-                  height: 200
+                  height: 160
                   align: CENTER
                   styles: [card_style]
                   widgets:
@@ -933,8 +936,8 @@ lvgl:
                         align: TOP_LEFT
                         x: 0
                         y: 0
-                        bg_color: 0x00B3FF
-                        bg_grad_color: 0x006DFF
+                        bg_color: 0xFFB300
+                        bg_grad_color: 0xFF6D00
                         bg_grad_dir: HOR
                         border_width: 0
                         radius: 0
@@ -943,12 +946,12 @@ lvgl:
                         id: icon_package
                         text: "\U0000E58F"
                         text_font: font_icons
-                        text_color: 0x00B3FF
+                        text_color: 0xFFB300
                         align: CENTER
                         y: -30
                     - label:
-                        text: "PAKET"
-                        text_font: font_huge_bold
+                        text: "Paket ablegen"
+                        text_font: font_large
                         text_color: 0xFFFFFF
                         align: CENTER
                         y: 35
@@ -966,7 +969,7 @@ lvgl:
             widgets:
               - obj:
                   width: 290
-                  height: 200
+                  height: 160
                   align: CENTER
                   styles: [card_style]
                   widgets:
@@ -976,8 +979,8 @@ lvgl:
                         align: TOP_LEFT
                         x: 0
                         y: 0
-                        bg_color: 0xC2577E
-                        bg_grad_color: 0xFFE500
+                        bg_color: 0x7E57C2
+                        bg_grad_color: 0x00E5FF
                         bg_grad_dir: HOR
                         border_width: 0
                         radius: 0
@@ -988,7 +991,7 @@ lvgl:
                         text_font: font_icons
                         text_color: 0xFFFFFF
                         align: CENTER
-                        y: -30
+                        y: -28
                     - label:
                         id: lbl_custom_text
                         text: "..."
@@ -996,7 +999,7 @@ lvgl:
                         text_color: 0xFFFFFF
                         text_align: CENTER
                         align: CENTER
-                        y: 35
+                        y: 26
                         long_mode: WRAP
                         width: 270
 
@@ -1013,7 +1016,7 @@ lvgl:
             widgets:
               - obj:
                   width: 290
-                  height: 200
+                  height: 160
                   align: CENTER
                   styles: [card_style]
                   widgets:
@@ -1023,8 +1026,8 @@ lvgl:
                         align: TOP_LEFT
                         x: 0
                         y: 0
-                        bg_color: 0x006DFF
-                        bg_grad_color: 0x0000D5
+                        bg_color: 0xFF6D00
+                        bg_grad_color: 0xD50000
                         bg_grad_dir: HOR
                         border_width: 0
                         radius: 0
@@ -1032,24 +1035,18 @@ lvgl:
                     - label:
                         text: "\U0000E002"
                         text_font: font_icons
-                        text_color: 0x006DFF
+                        text_color: 0xFF6D00
                         align: CENTER
-                        y: -30
+                        y: -26
                     - label:
                         text: "Verbindung Timeout"
                         text_font: font_medium
                         text_color: 0xFFFFFF
-                        text_align: CENTER
                         align: CENTER
-                        y: 20
-                        long_mode: WRAP
-                        width: 270
+                        y: 18
                     - label:
                         text: "Bitte erneut versuchen"
                         text_font: font_medium
                         text_color: 0x888888
-                        text_align: CENTER
                         align: CENTER
-                        y: 48
-                        long_mode: WRAP
-                        width: 270
+                        y: 42
