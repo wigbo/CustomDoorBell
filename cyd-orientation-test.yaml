@@ -1,0 +1,166 @@
+# ═══════════════════════════════════════════════════════════════════
+# CYD Orientierungs-Test — EIN Flash beantwortet alle Fragen
+#
+# Zeigt ein Testmuster, aus dem sich Orientierung, Spiegelung und
+# Farbordnung eindeutig ablesen lassen:
+#
+#   ┌──────────────────────────────────┐
+#   │ROT                          GRÜN │   ← 50×50 Farbquadrate
+#   │                                  │
+#   │      LANDSCAPE 320x240           │   ← Text lesbar = keine Spiegelung
+#   │      TL=ROT  TR=GRUEN            │
+#   │      BL=BLAU BR=GELB             │
+#   │                                  │
+#   │BLAU                          GELB│
+#   └──────────────────────────────────┘
+#      weißer Rahmen = volle Flächennutzung, keine Artefakte
+#
+# AUSWERTUNG (ein Foto genügt):
+#   Text lesbar, ROT oben links, Rahmen komplett  → PERFEKT
+#   Rotes Quadrat erscheint BLAU                  → color_order: BGR setzen
+#   Text spiegelverkehrt                          → mirror_x umschalten
+#   Text auf dem Kopf                             → mirror_x UND mirror_y umschalten
+#   Bild hochkant                                 → swap_xy umschalten
+#   Rahmen rechts/unten abgeschnitten             → dimensions prüfen
+#
+# Basis: bewährte CYD-Community-Konfiguration (element-software/
+# CYD-ESPHome-HA-Monitor) — dimensions NATIV 240×320 + swap_xy
+# + mirror_x + mirror_y = Landscape, USB rechts.
+# ═══════════════════════════════════════════════════════════════════
+
+esphome:
+  name: cyd-orientation-test
+  friendly_name: CYD Orientation Test
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: "CYD-Test"
+    password: "test1234"
+
+api:
+  reboot_timeout: 0s
+
+ota:
+  - platform: esphome
+
+logger:
+  level: DEBUG
+
+output:
+  - platform: gpio
+    pin: GPIO21
+    id: display_backlight_gpio
+
+light:
+  - platform: binary
+    output: display_backlight_gpio
+    id: backlight
+    restore_mode: ALWAYS_ON
+
+spi:
+  - id: tft
+    clk_pin: GPIO14
+    mosi_pin: GPIO13
+    miso_pin: GPIO12
+
+display:
+  - platform: ili9xxx
+    id: main_display
+    model: ILI9341
+    spi_id: tft
+    cs_pin: GPIO15
+    dc_pin: GPIO2
+    invert_colors: false
+    color_order: RGB
+    # WICHTIG: dimensions = NATIVE Panelmaße (Portrait), NICHT die
+    # Zielmaße nach Drehung. Die Drehung macht transform.
+    dimensions:
+      width: 240
+      height: 320
+    transform:
+      swap_xy: true
+      mirror_x: true
+      mirror_y: true
+    update_interval: never
+    auto_clear_enabled: false
+
+lvgl:
+  displays:
+    - main_display
+  buffer_size: 25%
+  pages:
+    - id: page_test
+      bg_color: 0x000000
+      scrollbar_mode: "off"
+      widgets:
+        # Weißer Rahmen über die volle Fläche — zeigt Abschneidung/Artefakte
+        - obj:
+            width: 100%
+            height: 100%
+            align: CENTER
+            bg_opa: TRANSP
+            border_width: 3
+            border_color: 0xFFFFFF
+            radius: 0
+            pad_all: 0
+            scrollbar_mode: "off"
+        # Ecken: ECHTE RGB-Werte (keine manuelle BGR-Tauscherei!)
+        - obj:                      # oben links: ROT
+            width: 50
+            height: 50
+            align: TOP_LEFT
+            x: 6
+            y: 6
+            bg_color: 0xFF0000
+            border_width: 0
+            radius: 0
+        - obj:                      # oben rechts: GRÜN
+            width: 50
+            height: 50
+            align: TOP_RIGHT
+            x: -6
+            y: 6
+            bg_color: 0x00FF00
+            border_width: 0
+            radius: 0
+        - obj:                      # unten links: BLAU
+            width: 50
+            height: 50
+            align: BOTTOM_LEFT
+            x: 6
+            y: -6
+            bg_color: 0x0000FF
+            border_width: 0
+            radius: 0
+        - obj:                      # unten rechts: GELB
+            width: 50
+            height: 50
+            align: BOTTOM_RIGHT
+            x: -6
+            y: -6
+            bg_color: 0xFFFF00
+            border_width: 0
+            radius: 0
+        # Text mittig — Lesbarkeit verrät Spiegelung
+        - label:
+            text: "LANDSCAPE 320x240"
+            align: CENTER
+            y: -20
+            text_color: 0xFFFFFF
+        - label:
+            text: "TL=ROT  TR=GRUEN"
+            align: CENTER
+            y: 5
+            text_color: 0xAAAAAA
+        - label:
+            text: "BL=BLAU  BR=GELB"
+            align: CENTER
+            y: 25
+            text_color: 0xAAAAAA
